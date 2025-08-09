@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0b0b0b;
+  --fg: #e6e6e6;
+}
+
+html, body, #root { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.container { @apply mx-auto px-6; }
+
+/* Brand rail (with edge fades and caption) */
+.brand-rail {
+  margin-top: 28px;
+  display: grid;
+  gap: 18px;
+  place-items: center;
+}
+
+.brand-viewport {
+  position: relative;
+  width: min(1100px, 92vw);
+  height: 86px;
+  overflow: hidden;
+  isolation: isolate; /* lets blend layers behave nicely */
+}
+
+.brand-track {
+  display: flex;
+  align-items: center;
+  gap: 56px;
+  will-change: transform;
+  animation: brand-scroll 38s linear infinite;
+}
+
+.brand-box {
+  width: clamp(90px, 9vw, 140px);
+  height: clamp(36px, 5vw, 56px);
+  background: linear-gradient(180deg, #8f949a, #3b3d40);
+  border-radius: 12px;
+  opacity: .68;
+  filter: drop-shadow(0 8px 22px rgba(0,0,0,.35));
+  position: relative;
+  flex: 0 0 auto;
+  transition: opacity .18s ease, transform .18s ease, filter .18s ease;
+}
+.brand-box::before {
+  content: "";
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(120% 120% at 20% 15%, rgba(255,255,255,.22), rgba(255,255,255,0) 55%);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+.brand-box:hover {
+  opacity: .96;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 10px 26px rgba(0,0,0,.42));
+}
+
+@keyframes brand-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.brand-fade {
+  content: "";
+  position: absolute; inset-block: 0; width: 14%;
+  pointer-events: none;
+  z-index: 2;
+}
+.brand-fade--left  { left: 0;  background: linear-gradient(to right, rgba(0,0,0,.78), rgba(0,0,0,0)); }
+.brand-fade--right { right: 0; background: linear-gradient(to left,  rgba(0,0,0,.78), rgba(0,0,0,0)); }
+
+/* Center vignette (darkens outside, spotlight at center) */
+.brand-viewport::before {
+  content: "";
+  position: absolute; inset: -10% 0;
+  z-index: 1; pointer-events: none;
+  background: radial-gradient(120% 85% at 50% 50%,
+              rgba(0,0,0,0) 32%,
+              rgba(0,0,0,.22) 55%,
+              rgba(0,0,0,.45) 78%,
+              rgba(0,0,0,.60) 100%);
+  mix-blend-mode: multiply;
+}
+
+/* Center bloom (gentle light lift at center) */
+.brand-viewport::after {
+  content: "";
+  position: absolute; inset: 0;
+  z-index: 1; pointer-events: none;
+  background: radial-gradient(75% 55% at 50% 50%,
+              rgba(255,255,255,.08) 0%,
+              rgba(255,255,255,.03) 40%,
+              rgba(255,255,255,0) 80%);
+  mix-blend-mode: screen;
+}
+
+.brand-caption {
+  text-align: center;
+  color: #bfc5cc;
+  font-size: clamp(14px, 2vw, 18px);
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+
+.brand-viewport:hover .brand-track { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-track { animation: none; }
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Background with white outline -->
+  <rect x="32" y="32" width="960" height="960" rx="160"
+        fill="#0B0C0E" stroke="#FFFFFF" stroke-width="28"/>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gN" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#22E58B"/>
+      <stop offset="55%" stop-color="#0DBA74"/>
+      <stop offset="100%" stop-color="#0B0C0E"/>
+    </linearGradient>
+    <radialGradient id="gGlow" cx="50%" cy="42%" r="48%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.08)"/>
+      <stop offset="60%" stop-color="rgba(255,255,255,0.03)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Subtle glow -->
+  <rect x="32" y="32" width="960" height="960" rx="160" fill="url(#gGlow)"/>
+
+  <!-- Bold solid N -->
+  <path d="M260 780 V260 H380 L660 640 V260 H764 V780 H644 L364 400 V780 Z"
+        fill="url(#gN)"/>
+</svg>
