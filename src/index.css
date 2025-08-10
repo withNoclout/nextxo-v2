@@ -275,19 +275,4 @@ body {
   .card-desc  { color: rgba(255,255,255,.7); font-size: 14px; }
 }
 
-/* Responsive 10-icon band (container queries) */
-@container (max-width: 1150px) {
-  .band { grid-template-columns: 1fr; height: auto; row-gap: 24px; }
-  .icons {
-    display: grid; /* from flex to grid */
-    grid-template-columns: repeat(5, 66px); /* 2 rows × 5 = 10 icons */
-    justify-content: center;
-    gap: 9px; /* keeps 75px center spacing */
-  }
-}
-@container (max-width: 720px) {
-  .icons { grid-template-columns: repeat(4, 66px); }
-}
-@container (max-width: 500px) {
-  .icons { grid-template-columns: repeat(3, 66px); }
-}
+/* (removed) responsive band rules to keep single-row compact layout */

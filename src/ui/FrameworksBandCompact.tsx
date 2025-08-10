@@ -18,9 +18,7 @@ export function FrameworksBandCompact() {
   const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null)
 
   return (
-    <section
-      className="mt-[250px] w-[1150px] h-[90px] mx-auto grid items-center [grid-template-columns:420px_1fr]"
-    >
+    <section className="w-[1150px] h-[90px] mx-auto grid items-center [grid-template-columns:420px_1fr]">
       {/* Left text block */}
       <div className="leading-none">
         <div className="text-[28px] font-semibold text-white/60">Use NetXO with</div>
