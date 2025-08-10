@@ -1,11 +1,11 @@
 import { Footer } from './Footer'
-import { Header } from './Header'
+import TopBar from './TopBar'
 import { PageFade } from './Page'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="max-w-[1700px] w-full mx-auto min-h-[6700px] flex flex-col bg-[#0a0a0a] text-white overflow-x-hidden">
-      <Header />
+      <TopBar />
       <main className="flex-1">
         <PageFade>
           {children}
