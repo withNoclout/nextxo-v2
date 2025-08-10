@@ -7,7 +7,7 @@ export function BrandLine() {
       {/* center the full-bleed section even inside a max-w layout */}
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen h-full">
         {/* track: duplicate content for seamless loop */}
-        <div className="flex gap-5 h-full brand-track">
+        <div className="flex gap-5 h-full brand-track justify-center">
           <Sequence />
           <Sequence /> {/* duplicate */}
         </div>
