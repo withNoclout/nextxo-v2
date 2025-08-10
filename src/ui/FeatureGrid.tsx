@@ -1,36 +1,37 @@
-function Band({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-white/10 overflow-hidden bg-white/5">
-      <div className="bg-white/5 border-b border-white/10 px-4 py-2 text-sm font-medium">
-        {title}
-      </div>
-      <div className="p-6 text-white/80 text-sm">{children}</div>
+import { Link } from 'react-router-dom'
+
+function Tile({ title, to, big = false }: { title: string; to?: string; big?: boolean }) {
+  const Inner = (
+    <div className={`card ${big ? 'card-lg' : ''} card-click`}>
+      <div className="card-title">{title}</div>
+      <div className="card-blank" />
     </div>
+  )
+  return to ? (
+    <Link to={to} aria-label={title} className="block focus:outline-none focus:ring-2 focus:ring-emerald-500 rounded-[18px]">
+      {Inner}
+    </Link>
+  ) : (
+    Inner
   )
 }
 
 export function FeatureGrid() {
   return (
-    <section id="features" className="container mx-auto px-6 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Band title="Authentication">
-          Sample text. Replace with your content.
-        </Band>
-        <Band title="Database">
-          Sample text. Replace with your content.
-        </Band>
-        <Band title="Storage">
-          Sample text. Replace with your content.
-        </Band>
-        <Band title="Edge Functions">
-          Sample text. Replace with your content.
-        </Band>
-        <Band title="Realtime">
-          Sample text. Replace with your content.
-        </Band>
-        <Band title="AI/Vector">
-          Sample text. Replace with your content.
-        </Band>
+    <section id="features" className="mx-auto px-4 sm:px-5 md:px-6 py-12 md:py-16" style={{maxWidth: '1300px'}}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+        {/* Big 2x2 tile */}
+        <div className="lg:col-span-2 lg:row-span-2">
+          <Tile title="Realtime Carbon Monitor" to="/realtime-carbon" big />
+        </div>
+
+        {/* Standard tiles, blank bodies */}
+        <Tile title="Authentication" />
+        <Tile title="Database" />
+        <Tile title="Storage" />
+        <Tile title="Edge Functions" />
+        <Tile title="Realtime" />
+        <Tile title="AI/Vector" />
       </div>
     </section>
   )
