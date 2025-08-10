@@ -6,7 +6,7 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
   const leftBtnRef = useRef<HTMLAnchorElement | null>(null)
   const rightBtnRef = useRef<HTMLAnchorElement | null>(null)
 
-  const [pos, setPos] = useState<{ cx: number | string; cy: number }>({ cx: '50%', cy: 220 })
+  const [pos, setPos] = useState<{ cx: number | string; cy: number; r: number }>({ cx: '50%', cy: 220, r: 580 })
 
   useLayoutEffect(() => {
     function calc() {
@@ -16,7 +16,19 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
       const b = rightBtnRef.current.getBoundingClientRect()
       const cx = (a.right + b.left) / 2 - wrap.left
       const cy = (a.top + a.bottom) / 2 - wrap.top
-      setPos({ cx, cy })
+      // Compute radius so the fade starts ~200px from left/right and ~100px below the buttons
+      const width = wrap.width
+      const height = wrap.height
+      const toLeft = cx
+      const toRight = width - cx
+      const toBottom = height - cy
+      const SIDE_CLEAR = 200
+      const BOTTOM_CLEAR = 100
+      const computedR = Math.max(
+        80, // minimum radius safeguard
+        Math.min(toLeft - SIDE_CLEAR, toRight - SIDE_CLEAR, toBottom - BOTTOM_CLEAR)
+      )
+      setPos({ cx, cy, r: isFinite(computedR) ? computedR : 580 })
     }
     calc()
     window.addEventListener('resize', calc)
@@ -26,6 +38,7 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
   const styleVars = {
     ['--cx' as any]: typeof pos.cx === 'number' ? `${pos.cx}px` : pos.cx,
     ['--cy' as any]: `${pos.cy}px`,
+    ['--r' as any]: typeof pos.r === 'number' ? `${pos.r}px` : `${pos.r}`,
   } as React.CSSProperties
 
   return (
@@ -68,7 +81,7 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
           [--cx:50%] [--cy:220px] [--r:580px]
           [background:radial-gradient(circle_at_var(--cx)_var(--cy),
             rgba(0,0,0,0) var(--r),
-            rgba(0,0,0,.70) calc(var(--r) + 160px),
+            rgba(0,0,0,.70) calc(var(--r) + 180px),
             rgba(0,0,0,.90) 100%)]
           [clip-path:inset(var(--cy)_0_0_0)]
         "
