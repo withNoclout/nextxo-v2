@@ -244,3 +244,32 @@ body {
 }
 .btn-outline:hover { border-color: var(--stroke-strong); background: rgba(255,255,255,0.02); }
 .btn-outline:active { border-color: var(--stroke-strong); background: rgba(255,255,255,0.03); }
+
+/* Responsive 7-card panel (container queries) */
+.panel { height: var(--panel-h); }
+@container (max-width: 1349px) {
+  .panel [data-priority="7"] { display: none; }
+}
+@container (max-width: 1199px) {
+  .panel [data-priority="6"] { display: none; }
+}
+@container (max-width: 1023px) {
+  .panel [data-priority="5"] { display: none; }
+  .panel { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .panel [data-priority="1"] { grid-column: span 2; }
+}
+@container (max-width: 879px) {
+  .panel [data-priority="4"] { display: none; }
+  .panel { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .panel [data-priority="1"] { grid-column: span 2; }
+}
+@container (max-width: 639px) {
+  .panel { grid-template-columns: 1fr; }
+  .panel { --panel-h: clamp(420px, 90vh, 620px); }
+  .panel [data-priority="2"] { grid-column: span 1; }
+  .panel [data-priority="3"],
+  .panel [data-priority="4"],
+  .panel [data-priority="5"],
+  .panel [data-priority="6"],
+  .panel [data-priority="7"] { display: none; }
+}
