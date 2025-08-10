@@ -1,5 +1,6 @@
 import FeaturePanel from '../ui/FeaturePanel'
 import { FrameworksBand } from '../ui/FrameworksBand'
+import { FrameworksBandCompact } from '../ui/FrameworksBandCompact'
 import Layout from '../ui/Layout'
 import { Footer } from '../ui/Footer'
 import { Header } from '../ui/Header'
@@ -11,7 +12,7 @@ export default function Landing() {
     <Layout>
       <Hero />
       <FeaturePanel />
-  <FrameworksBand />
+  <FrameworksBandCompact />
     </Layout>
   )
 }

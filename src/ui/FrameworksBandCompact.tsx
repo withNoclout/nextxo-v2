@@ -1,0 +1,124 @@
+import React from 'react'
+
+export function FrameworksBandCompact() {
+  const items = [
+    { label: 'React',   Icon: IconReact },
+    { label: 'Next.js', Icon: IconNext },
+    { label: 'Astro',   Icon: IconAstro },
+    { label: 'Flutter', Icon: IconFlutter },
+    { label: 'Kotlin',  Icon: IconKotlin },
+    { label: 'Svelte',  Icon: IconSvelte },
+    { label: 'Vue',     Icon: IconVue },
+    { label: 'Nuxt',    Icon: IconNuxt },
+  ] as const
+
+  const [activeName, setActiveName] = React.useState('React')
+
+  return (
+    <section
+      className="mt-[250px] w-[1150px] h-[90px] mx-auto grid items-center [grid-template-columns:420px_1fr]"
+    >
+      {/* Left text block */}
+      <div className="leading-none">
+        <div className="text-[28px] font-semibold text-white/60">Use NetXO with</div>
+        <div className="text-[36px] font-bold text-white" aria-live="polite">{activeName}</div>
+      </div>
+
+      {/* Right icon rail (starts at x = 420px by grid) */}
+      <ul className="flex items-center gap-5 justify-start">
+        {items.map(({ label, Icon }) => {
+          const active = activeName === label
+          return (
+            <li key={label}>
+              <button
+                type="button"
+                aria-label={label}
+                onMouseEnter={() => setActiveName(label)}
+                onFocus={() => setActiveName(label)}
+                className={[
+                  'group w-[66px] h-[66px] grid place-items-center rounded-[12px]',
+                  'ring-1 transition duration-150 ease-out',
+                  active ? 'ring-white' : 'ring-white/20 hover:ring-white',
+                  'outline-none focus-visible:ring-white',
+                ].join(' ')}
+              >
+                <Icon
+                  className={[
+                    'h-10 w-10 transition duration-150 ease-out',
+                    active ? 'fill-white' : 'fill-white/60 group-hover:fill-white group-hover:scale-[1.03]',
+                  ].join(' ')}
+                />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+/* --- minimalist SVG placeholders (swap with official icons for exact match) --- */
+function IconReact({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <circle cx="12" cy="12" r="2.2" />
+      <ellipse cx="12" cy="12" rx="10" ry="4.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)" fill="none" stroke="currentColor" strokeWidth="1.7" />
+      <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(120 12 12)" fill="none" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  )
+}
+function IconNext({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <circle cx="12" cy="12" r="11" fill="currentColor" opacity="0.15" />
+      <text x="8.5" y="16" fontFamily="ui-sans-serif,system-ui" fontSize="10" fill="currentColor">
+        N
+      </text>
+    </svg>
+  )
+}
+function IconAstro({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M12 3l6 12H6L12 3z" />
+      <circle cx="12" cy="19" r="3" opacity="0.3" />
+    </svg>
+  )
+}
+function IconFlutter({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M14 3L4 13l3 3 13-13h-6zM7 19l4 4 3-3-4-4-3 3z" />
+    </svg>
+  )
+}
+function IconKotlin({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M3 3h18L12 12 21 21H3V3z" />
+    </svg>
+  )
+}
+function IconSvelte({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M16 3c-2-1-4-1-6 .5L6 6.2C4 7.4 3.4 9.8 4.5 11.8c1.2 2 3.8 2.7 5.8 1.5l4-2.3c1-.6 1.3-1.9.7-2.9-.6-1-1.9-1.3-2.9-.7l-4 2.3c-.9.5-2 .2-2.5-.7-.5-.9-.2-2 .7-2.5l4-2.3C12.3 3.2 14 3.3 15.3 4" />
+      <path d="M8 21c2 1 4 1 6-.5l4-2.3c2-1.2 2.6-3.6 1.5-5.6-1.2-2-3.8-2.7-5.8-1.5l-4 2.3c-1 .6-1.3 1.9-.7 2.9.6 1 1.9 1.3 2.9.7l4-2.3c.9-.5 2-.2 2.5.7.5.9.2 2-.7 2.5l-4 2.3C11.7 20.8 10 20.7 8.7 20" />
+    </svg>
+  )
+}
+function IconVue({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M2 4h6l4 7 4-7h6L12 22 2 4z" />
+    </svg>
+  )
+}
+function IconNuxt({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M3 18l6-11 6 11H3zM9 18l3-6 3 6H9z" />
+    </svg>
+  )
+}
