@@ -160,12 +160,12 @@ body {
   .brand-track { animation: none; }
 }
 
-/* Site canvas wrapper (1700 × 6500) */
+/* Site canvas wrapper (1700 × 7500) */
 .site-frame {
   max-width: 1700px;
   width: 100%;
   margin: 0 auto;
-  min-height: 6500px;
+  min-height: 7500px;
 }
 
 /* Supabase-style cards */

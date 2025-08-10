@@ -4,7 +4,7 @@ import { PageFade } from './Page'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="max-w-[1700px] w-full mx-auto min-h-[6700px] flex flex-col bg-[#0a0a0a] text-white overflow-x-hidden">
+  <div className="max-w-[1700px] w-full mx-auto min-h-[7500px] flex flex-col bg-[#0a0a0a] text-white overflow-x-hidden">
       <TopBar />
       <main className="flex-1">
         <PageFade>
