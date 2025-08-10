@@ -21,11 +21,11 @@ export function FrameworksBand() {
       <div className="grid grid-cols-12 items-center gap-6">
         {/* Left text */}
         <div className="col-span-12 md:col-span-5">
-          <div className="leading-none">
-            <div className="text-[32px] md:text-[36px] font-semibold text-white/60">
+          <div className="leading-tight">
+            <div className="text-[44px] md:text-[36px] font-semibold text-white/60 tracking-tight">
               Use NetXO with
             </div>
-            <div className="mt-1 text-[44px] md:text-[56px] font-bold text-white">
+            <div className="mt-1 text-[64px] md:text-[48px] font-bold text-white tracking-tight whitespace-nowrap" aria-live="polite">
               {activeName}
             </div>
           </div>
