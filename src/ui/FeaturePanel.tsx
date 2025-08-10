@@ -36,6 +36,11 @@ export default function FeaturePanel() {
           <div className="card-blank" />
         </section>
       </div>
+      {/* Caption: exactly 30px below the panel, aligned left within the same container */}
+      <p className="mt-[30px] text-sm leading-relaxed">
+        <span className="font-bold text-white">Use one or all.</span>{' '}
+        <span className="text-white/60">Best of breed products. Integrated as a platform.</span>
+      </p>
     </section>
   );
 }
