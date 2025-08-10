@@ -292,3 +292,18 @@ body {
 }
 
 /* (removed) responsive band rules to keep single-row compact layout */
+
+/* --- Brand Line marquee (global, used by BrandLine component) --- */
+@keyframes brand-marquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }  /* one full sequence width */
+}
+
+/* helper classes (if you're not using Tailwind arbitrary props) */
+.brand-track {
+  animation: brand-marquee 25s linear infinite;
+  will-change: transform;
+}
+.ticker:hover .brand-track {
+  animation-play-state: paused;
+}

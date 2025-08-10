@@ -9,20 +9,21 @@ export function CustomerStories(): JSX.Element {
           Customer stories
         </div>
 
-        {/* main title: 2 lines, 25px gap between lines -> 30px font + 25px = 55px leading */}
-        <h2 className="mt-[30px] text-[30px] leading-[55px] font-semibold text-white clamp-2">
-          Trusted by the world’s most innovative companies.
+        {/* Title: 2 lines, 25px gap between lines */}
+        <h2 className="mt-[30px] text-white font-semibold text-[30px]">
+          <span className="block leading-none">Trusted by the world’s</span>
+          <span className="block mt-[25px] leading-none">most innovative companies.</span>
         </h2>
 
-        {/* description 30px under title */}
-        <p className="mt-[30px] text-[10px] leading-5 text-white/70 max-w-[880px]">
+        {/* Description: 14px, 30px below title */}
+        <p className="mt-[30px] text-[14px] leading-[22px] text-white/70 max-w-[880px]">
           See how NetXO empowers companies of all sizes to accelerate their growth
           and streamline their work.
         </p>
       </div>
 
-      {/* right: buttons (bottom-aligned, 10px apart) */}
-      <div className="flex items-end gap-[10px]">
+  {/* right: buttons (bottom-aligned, 10px apart) */}
+  <div className="flex items-end gap-[10px] mb-[14px]">
         <button
           className="h-[30px] px-3 rounded-xl text-[10px] text-white
                      border border-white/30 bg-[#0B7A54]
