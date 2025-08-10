@@ -5,7 +5,7 @@ import { BrandLine } from '../ui/BrandLine'
 import { FreshBuildPanel } from '../ui/FreshBuildPanel'
 import { TemplatesGrid } from '../ui/TemplatesGrid'
 import { DashboardHeading } from '../ui/DashboardHeading'
-import { CommunityPanel } from '../ui/CommunityPanel'
+import { CommunityWithHalfFade } from '../ui/CommunityWithHalfFade'
 import { ScrollingABGrid } from '../ui/ScrollingABGrid'
 import Layout from '../ui/Layout'
 import { Hero } from '../ui/Hero'
@@ -27,10 +27,10 @@ export default function Landing() {
   <TemplatesGrid />
   {/* Dashboard heading sits 150px under the templates grid */}
   <DashboardHeading />
-  {/* Community panel sits ~1080px under the previous section */}
-  <CommunityPanel />
-  {/* Scrolling A/B grid sits 40px under the community section */}
-  <ScrollingABGrid />
+      {/* Community + Half Fade wrapper with scrolling section as child */}
+      <CommunityWithHalfFade>
+        <ScrollingABGrid />
+      </CommunityWithHalfFade>
     </Layout>
   )
 }
