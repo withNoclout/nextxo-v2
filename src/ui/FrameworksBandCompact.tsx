@@ -2,17 +2,20 @@ import React from 'react'
 
 export function FrameworksBandCompact() {
   const items = [
-    { label: 'React',   Icon: IconReact },
-    { label: 'Next.js', Icon: IconNext },
-    { label: 'Astro',   Icon: IconAstro },
-    { label: 'Flutter', Icon: IconFlutter },
-    { label: 'Kotlin',  Icon: IconKotlin },
-    { label: 'Svelte',  Icon: IconSvelte },
-    { label: 'Vue',     Icon: IconVue },
-    { label: 'Nuxt',    Icon: IconNuxt },
+    { label: 'React',    Icon: IconReact },
+    { label: 'Next.js',  Icon: IconNext },
+    { label: 'RedwoodJS',Icon: IconRedwood },
+    { label: 'Flutter',  Icon: IconFlutter },
+    { label: 'Kotlin',   Icon: IconKotlin },
+    { label: 'Svelte',   Icon: IconSvelte },
+    { label: 'SolidJS',  Icon: IconSolid },
+    { label: 'Vue',      Icon: IconVue },
+    { label: 'Next.js',  Icon: IconNext },
+    { label: 'Refine',   Icon: IconRefine },
   ] as const
 
   const [activeName, setActiveName] = React.useState('React')
+  const [hoveredIdx, setHoveredIdx] = React.useState<number | null>(null)
 
   return (
     <section
@@ -25,27 +28,33 @@ export function FrameworksBandCompact() {
       </div>
 
       {/* Right icon rail (starts at x = 420px by grid) */}
-  <ul className="m-0 p-0 list-none flex items-center gap-5 justify-start">
-        {items.map(({ label, Icon }) => {
-          const active = activeName === label
+      <ul
+        className="m-0 p-0 list-none flex items-center justify-start gap-[9px]"
+        onMouseLeave={() => setHoveredIdx(null)}
+      >
+        {items.map(({ label, Icon }, i) => {
+          const isHover = hoveredIdx === i
+          const isDim = hoveredIdx !== null && hoveredIdx !== i
+
           return (
-            <li key={label}>
+            <li key={`${label}-${i}`}>
               <button
                 type="button"
                 aria-label={label}
-                onMouseEnter={() => setActiveName(label)}
-                onFocus={() => setActiveName(label)}
+                onMouseEnter={() => { setHoveredIdx(i); setActiveName(label) }}
+                onFocus={() => { setHoveredIdx(i); setActiveName(label) }}
                 className={[
                   'group w-[66px] h-[66px] grid place-items-center rounded-[12px]',
                   'ring-1 transition duration-150 ease-out',
-                  active ? 'ring-white' : 'ring-white/20 hover:ring-white',
-                  'outline-none focus-visible:ring-white',
+                  // hidden by default; visible on hover/focus
+                  'ring-transparent hover:ring-white focus-visible:ring-white',
+                  isHover ? 'ring-white' : '',
                 ].join(' ')}
               >
                 <Icon
                   className={[
                     'h-10 w-10 transition duration-150 ease-out',
-                    active ? 'fill-white' : 'fill-white/60 group-hover:fill-white group-hover:scale-[1.03]',
+                    isHover ? 'fill-white opacity-100 scale-[1.03]' : isDim ? 'fill-white/60 opacity-40' : 'fill-white/60 opacity-100',
                   ].join(' ')}
                 />
               </button>
@@ -119,6 +128,33 @@ function IconNuxt({ className = '' }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className}>
       <path d="M3 18l6-11 6 11H3zM9 18l3-6 3 6H9z" />
+    </svg>
+  )
+}
+
+function IconRedwood({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M12 2l5 9H7l5-9z" />
+      <rect x="11" y="11" width="2" height="10" rx="1" />
+    </svg>
+  )
+}
+
+function IconSolid({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <path d="M12 3c-3 0-5 2-5 5 0 5 5 7 5 13 0-6 5-8 5-13 0-3-2-5-5-5z" />
+    </svg>
+  )
+}
+
+function IconRefine({ className = '' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className}>
+      <rect x="4" y="6" width="16" height="3" rx="1.5" />
+      <rect x="4" y="11" width="12" height="3" rx="1.5" />
+      <rect x="4" y="16" width="8" height="3" rx="1.5" />
     </svg>
   )
 }
