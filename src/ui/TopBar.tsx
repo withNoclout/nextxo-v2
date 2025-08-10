@@ -1,31 +1,66 @@
 import React from 'react'
 
 export default function TopBar() {
+  const [activeMenu, setActiveMenu] = React.useState<null | 'Product' | 'Developers' | 'Solutions'>(null)
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const cancelClose = () => { if (closeTimer.current) clearTimeout(closeTimer.current) }
+  const scheduleClose = () => {
+    cancelClose()
+    closeTimer.current = setTimeout(() => setActiveMenu(null), 1000)
+  }
+  const openMenu = (key: 'Product' | 'Developers' | 'Solutions') => {
+    cancelClose()
+    setActiveMenu(key)
+  }
+
   return (
     <>
       {/* full-width hairline lives here now */}
       <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-md">
         <div className="mx-auto max-w-[1385px] h-[65px] px-4">
           <div className="h-full flex items-center justify-between">
-            {/* left: brand + nav */}
+            {/* left */}
             <div className="flex items-center">
-              <a href="#" className="flex items-center gap-3">
+              <a className="flex items-center gap-3" href="#">
                 <div className="h-7 w-7 rounded-sm bg-[#22c55e] grid place-items-center text-black font-bold">N</div>
                 <span className="text-white text-lg font-semibold">NetXO</span>
               </a>
 
-              {/* nav — 14px text, 40px from brand, 20px between */}
-              <nav className="ml-[40px] flex items-center gap-5 text-[14px] leading-none">
-                <Mega label="Product" />
-                <Mega label="Developers" />
-                <Mega label="Solutions" />
+              {/* nav: keep pointer inside container to avoid closing */}
+              <nav
+                className="ml-[40px] flex items-center gap-5 text-[14px] leading-none"
+                onMouseEnter={cancelClose}
+                onMouseLeave={scheduleClose}
+              >
+                <Mega
+                  label="Product"
+                  open={activeMenu === 'Product'}
+                  onOpen={() => openMenu('Product')}
+                  onKeepOpen={cancelClose}
+                  onMaybeClose={scheduleClose}
+                />
+                <Mega
+                  label="Developers"
+                  open={activeMenu === 'Developers'}
+                  onOpen={() => openMenu('Developers')}
+                  onKeepOpen={cancelClose}
+                  onMaybeClose={scheduleClose}
+                />
+                <Mega
+                  label="Solutions"
+                  open={activeMenu === 'Solutions'}
+                  onOpen={() => openMenu('Solutions')}
+                  onKeepOpen={cancelClose}
+                  onMaybeClose={scheduleClose}
+                />
                 <NavLink>Pricing</NavLink>
                 <NavLink>Docs</NavLink>
                 <NavLink>Community</NavLink>
               </nav>
             </div>
 
-            {/* right */}
+            {/* right cluster left as-is */}
             <div className="flex items-center gap-3">
               <div className="h-[30px] px-2 flex items-center gap-2 text-white/80">
                 <GitHubIcon className="h-4 w-4 fill-white/70" />
@@ -37,10 +72,9 @@ export default function TopBar() {
           </div>
         </div>
       </header>
-      {/* spacer so content doesn’t hide behind the fixed bar */}
       <div className="h-[65px]" />
     </>
-  );
+  )
 }
 
 /* ---------- primitives ---------- */
@@ -89,41 +123,38 @@ function ButtonGreen({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ---------- mega menu (controlled with 1s close timer) ---------- */
-function Mega({ label }: { label: string }) {
-  const [open, setOpen] = React.useState(false)
-  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+/* ---------- mega menu (TopBar-controlled) ---------- */
+function Mega({ label, open, onOpen, onKeepOpen, onMaybeClose }: {
+  label: 'Product' | 'Developers' | 'Solutions';
+  open: boolean;
+  onOpen: () => void;
+  onKeepOpen: () => void;
+  onMaybeClose: () => void;
+}) {
   const id = React.useId()
-
-  const openNow = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current)
-    setOpen(true)
-  }
-  const scheduleClose = () => {
-    if (closeTimer.current) clearTimeout(closeTimer.current)
-    closeTimer.current = setTimeout(() => setOpen(false), 1000)
-  }
-
   return (
-    <div className="relative" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
+    <div className="relative" onMouseEnter={onOpen} onFocus={onOpen}>
       <button
         type="button"
         aria-expanded={open}
         aria-controls={id}
-        onClick={() => setOpen(v => !v)}
-        onFocus={openNow}
-        onBlur={scheduleClose}
-        className="inline-flex items-center gap-1.5 text-white/80 hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded h-[30px]"
+        onMouseEnter={onOpen}
+        onFocus={onOpen}
+        onClick={() => (open ? onMaybeClose() : onOpen())}
+        className={[
+          'inline-flex items-center gap-1.5 h-[30px] rounded outline-none focus-visible:ring-2 focus-visible:ring-white/30 transition-colors',
+          open ? 'text-emerald-400' : 'text-white/80 hover:text-emerald-400',
+        ].join(' ')}
       >
         {label}
-        <ChevronDown className="h-4 w-4" />
+        <ChevronDown className={'h-4 w-4 ' + (open ? 'text-emerald-400' : '')} />
       </button>
 
       {/* panel */}
       <div
         id={id}
-        onMouseEnter={openNow}
-        onMouseLeave={scheduleClose}
+        onMouseEnter={onKeepOpen}
+        onMouseLeave={onMaybeClose}
         className={[
           'absolute left-0 top-[calc(100%+10px)] z-50 w-[920px]',
           'rounded-2xl border border-white/10 bg-[#0E0E0E]/95 backdrop-blur-md',
@@ -147,7 +178,6 @@ function Mega({ label }: { label: string }) {
                   <a href="#" className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
                     <SquareIcon className="h-10 w-10 stroke-white/50" />
                     <div>
-                      {/* text goes GREEN on hover/focus */}
                       <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{t}</div>
                       <div className="text-white/60 text-sm">{d}</div>
                     </div>
