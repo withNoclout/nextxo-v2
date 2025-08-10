@@ -3,14 +3,9 @@ import React from 'react'
 export default function TopBar() {
   return (
     <>
-      <header className="fixed top-0 inset-x-0 z-50">
-        <div
-          className="
-            mx-auto max-w-[1385px] h-[65px] px-4
-            border-b border-white/10
-            bg-black/40 backdrop-blur-md supports-[backdrop-filter]:backdrop-blur-md
-          "
-        >
+      {/* full-width hairline lives here now */}
+      <header className="fixed top-0 inset-x-0 z-50 border-b border-white/10 bg-black/40 backdrop-blur-md">
+        <div className="mx-auto max-w-[1385px] h-[65px] px-4">
           <div className="h-full flex items-center justify-between">
             {/* left: brand + nav */}
             <div className="flex items-center">
@@ -30,17 +25,13 @@ export default function TopBar() {
               </nav>
             </div>
 
-            {/* right: metric + buttons (different colors) */}
+            {/* right */}
             <div className="flex items-center gap-3">
-              <div className="h-[36px] px-3 flex items-center gap-2 text-white/80">
-                <GitHubIcon className="h-5 w-5 fill-white/70" />
-                <span className="tabular-nums">80.1K</span>
+              <div className="h-[30px] px-2 flex items-center gap-2 text-white/80">
+                <GitHubIcon className="h-4 w-4 fill-white/70" />
+                <span className="tabular-nums text-[12px]">80.1K</span>
               </div>
-
-              {/* Support = neutral dark (like Request a demo) */}
               <ButtonNeutral>Support</ButtonNeutral>
-
-              {/* Get started = green (like Start your project) */}
               <ButtonGreen>Get started</ButtonGreen>
             </div>
           </div>
@@ -64,17 +55,16 @@ function NavLink({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* Neutral dark button (like “Request a demo”) */
+/* 85×30 neutral (demo-style) */
 function ButtonNeutral({ children }: { children: React.ReactNode }) {
   return (
     <button
       className="
-        h-[40px] px-4 rounded-xl
+        w-[85px] h-[30px] text-[10px]
+        rounded-lg flex items-center justify-center
         border border-white/30 text-white
-        bg-[#161616]
-        hover:bg-[#1d1d1d]
-        active:translate-y-[1px]
-        transition
+        bg-[#161616] hover:bg-[#1d1d1d]
+        active:translate-y-[1px] transition
       "
     >
       {children}
@@ -82,17 +72,16 @@ function ButtonNeutral({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* Green button (like “Start your project”) */
+/* 85×30 green (primary) */
 function ButtonGreen({ children }: { children: React.ReactNode }) {
   return (
     <button
       className="
-        h-[40px] px-4 rounded-xl
+        w-[85px] h-[30px] text-[10px]
+        rounded-lg flex items-center justify-center
         border border-white/30 text-white
-        bg-[#0B7A54]  /* deep green similar to your hero button */
-        hover:brightness-110
-        active:translate-y-[1px]
-        transition
+        bg-[#0B7A54] hover:brightness-110
+        active:translate-y-[1px] transition
       "
     >
       {children}
