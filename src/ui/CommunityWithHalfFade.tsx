@@ -63,7 +63,15 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
 
       {/* HALF-CIRCLE FADE (bottom only) */}
       <div
-        className="pointer-events-none absolute inset-0 [--cx:50%] [--cy:220px] [background:radial-gradient(circle_at_var(--cx)_var(--cy),rgba(0,0,0,0)_640px,rgba(0,0,0,.70)_800px,rgba(0,0,0,.90)_100%)] [clip-path:inset(var(--cy)_0_0_0)]"
+        className="
+          pointer-events-none absolute inset-0
+          [--cx:50%] [--cy:220px] [--r:580px]
+          [background:radial-gradient(circle_at_var(--cx)_var(--cy),
+            rgba(0,0,0,0) var(--r),
+            rgba(0,0,0,.70) calc(var(--r) + 160px),
+            rgba(0,0,0,.90) 100%)]
+          [clip-path:inset(var(--cy)_0_0_0)]
+        "
         style={styleVars}
       />
     </section>
