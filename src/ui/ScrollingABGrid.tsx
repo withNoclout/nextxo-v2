@@ -3,12 +3,20 @@ import React from 'react'
 /* 640px tall, two rows, 40px below the previous section */
 export function ScrollingABGrid() {
   return (
-    <section className="mt-[40px] h-[640px] w-screen overflow-hidden ticker">
+    <section className="relative mt-[40px] h-[640px] w-screen overflow-hidden ticker">
       <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen h-full">
         <div className="flex flex-col h-full justify-between">
           <MarqueeRow pattern={row1Pattern} />
           <MarqueeRow pattern={row2Pattern} />
         </div>
+        {/* circular fade overlay — radius ~640px */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 640px, rgba(0,0,0,.70) 800px, rgba(0,0,0,.90) 100%)',
+          }}
+        />
       </div>
     </section>
   );
