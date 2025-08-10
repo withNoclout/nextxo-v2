@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/pages/Landing.tsx","./src/pages/RealtimeCarbon.tsx","./src/ui/FeatureGrid.tsx","./src/ui/Footer.tsx","./src/ui/Header.tsx","./src/ui/Hero.tsx","./src/ui/Page.tsx"],"version":"5.9.2"}
+{"root":["./src/App.tsx","./src/main.tsx","./src/pages/Landing.tsx","./src/pages/RealtimeCarbon.tsx","./src/ui/FeatureGrid.tsx","./src/ui/FeaturePanel.tsx","./src/ui/Footer.tsx","./src/ui/Header.tsx","./src/ui/Hero.tsx","./src/ui/Layout.tsx","./src/ui/Page.tsx"],"version":"5.9.2"}
