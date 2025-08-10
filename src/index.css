@@ -245,31 +245,32 @@ body {
 .btn-outline:hover { border-color: var(--stroke-strong); background: rgba(255,255,255,0.02); }
 .btn-outline:active { border-color: var(--stroke-strong); background: rgba(255,255,255,0.03); }
 
-/* Responsive 7-card panel (container queries) */
+/* Responsive 7-card panel (Supabase-like modes) */
 .panel { height: var(--panel-h); }
+/* Mode 2: Stacked (ALL cards visible, vertical) */
 @container (max-width: 1349px) {
-  .panel [data-priority="7"] { display: none; }
+  .panel {
+    height: auto;                 /* stop forcing 800px */
+    grid-template-columns: 1fr;   /* 1 column stack */
+    grid-auto-rows: auto;         /* natural height */
+    gap: 24px;                    /* stack gap */
+  }
+  .panel > .card {
+    grid-column: auto;            /* override spans */
+    grid-row: auto;
+    min-height: 260px;            /* optional */
+  }
+  .card-media { height: 180px; }  /* shrink visuals */
 }
-@container (max-width: 1199px) {
-  .panel [data-priority="6"] { display: none; }
-}
-@container (max-width: 1023px) {
-  .panel [data-priority="5"] { display: none; }
-  .panel { grid-template-columns: repeat(3, minmax(0,1fr)); }
-  .panel [data-priority="1"] { grid-column: span 2; }
-}
-@container (max-width: 879px) {
-  .panel [data-priority="4"] { display: none; }
-  .panel { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .panel [data-priority="1"] { grid-column: span 2; }
-}
-@container (max-width: 639px) {
-  .panel { grid-template-columns: 1fr; }
-  .panel { --panel-h: clamp(420px, 90vh, 620px); }
-  .panel [data-priority="2"] { grid-column: span 1; }
-  .panel [data-priority="3"],
-  .panel [data-priority="4"],
-  .panel [data-priority="5"],
-  .panel [data-priority="6"],
-  .panel [data-priority="7"] { display: none; }
+/* Mode 3: Compact list (title + description only) */
+@container (max-width: 899px) {
+  .panel { gap: 20px; }
+  .panel > .card {
+    padding: 16px 18px;
+    min-height: 0;
+    border-radius: 16px;
+  }
+  .card-media { display: none; }        /* hide heavy art */
+  .card-title { font-weight: 600; font-size: 18px; }
+  .card-desc  { color: rgba(255,255,255,.7); font-size: 14px; }
 }
