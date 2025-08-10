@@ -6,7 +6,7 @@ import { FreshBuildPanel } from '../ui/FreshBuildPanel'
 import { TemplatesGrid } from '../ui/TemplatesGrid'
 import { DashboardHeading } from '../ui/DashboardHeading'
 import { CommunityPanel } from '../ui/CommunityPanel'
-import { MovingCardsPanel } from '../ui/MovingCardsPanel'
+import { ScrollingABGrid } from '../ui/ScrollingABGrid'
 import Layout from '../ui/Layout'
 import { Hero } from '../ui/Hero'
 
@@ -29,8 +29,8 @@ export default function Landing() {
   <DashboardHeading />
   {/* Community panel sits ~1080px under the previous section */}
   <CommunityPanel />
-  {/* Moving cards panel sits 40px under the community section */}
-  <MovingCardsPanel />
+  {/* Scrolling A/B grid sits 40px under the community section */}
+  <ScrollingABGrid />
     </Layout>
   )
 }
