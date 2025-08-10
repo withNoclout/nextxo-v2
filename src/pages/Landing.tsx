@@ -9,8 +9,10 @@ export default function Landing() {
     <Layout>
       <Hero />
   <FeaturePanel />
-  <FrameworksBandCompact />
-  <CustomerStories />
+      <FrameworksBandCompact />
+      <div className="mt-[205px]">
+        <CustomerStories />
+      </div>
     </Layout>
   )
 }
