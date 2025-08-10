@@ -16,17 +16,15 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
       const b = rightBtnRef.current.getBoundingClientRect()
       const cx = (a.right + b.left) / 2 - wrap.left
       const cy = (a.top + a.bottom) / 2 - wrap.top
-      // Compute radius so the fade starts ~200px from left/right and ~100px below the buttons
+      // Compute radius so the fade starts ~50px below the buttons and keeps ~200px from left/right edges
       const width = wrap.width
-      const height = wrap.height
       const toLeft = cx
       const toRight = width - cx
-      const toBottom = height - cy
-      const SIDE_CLEAR = 200
-      const BOTTOM_CLEAR = 100
+      const SIDE_CLEAR = 200 // keep at least 200px shaded along left/right edges
+      const BELOW_BUTTON_CLEAR = 50 // start fade 50px below button center
       const computedR = Math.max(
-        80, // minimum radius safeguard
-        Math.min(toLeft - SIDE_CLEAR, toRight - SIDE_CLEAR, toBottom - BOTTOM_CLEAR)
+        20, // minimum radius safeguard
+        Math.min(toLeft - SIDE_CLEAR, toRight - SIDE_CLEAR, BELOW_BUTTON_CLEAR)
       )
       setPos({ cx, cy, r: isFinite(computedR) ? computedR : 580 })
     }
