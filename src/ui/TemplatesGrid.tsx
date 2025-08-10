@@ -3,7 +3,7 @@ import React from 'react'
 export function TemplatesGrid() {
   return (
     <section className="w-[1240px] h-[640px] mx-auto mt-[60px]">
-      <div className="grid grid-cols-3 grid-rows-2 gap-[25px] h-full">
+      <div className="grid grid-cols-3 grid-rows-2 gap-6 h-full">
         <TemplateCard
           title="Stripe Subscriptions Starter"
           desc="The all-in-one subscription starter kit for high-performance SaaS applications."
