@@ -1,4 +1,6 @@
 import React from 'react'
+import { mockTestimonials } from './mockTestimonials'
+import { TestimonialCard } from './TestimonialCard'
 
 /* 640px tall, two rows, 40px below the previous section */
 export function ScrollingABGrid() {
@@ -56,54 +58,14 @@ function MarqueeRow({ pattern }: { pattern: Array<{ type: 'A' | 'B'; ml: number 
 function Sequence({ pattern }: { pattern: Array<{ type: 'A' | 'B'; ml: number }> }) {
   return (
     <div className="flex items-center">
-      {pattern.map((p, i) =>
-        p.type === 'A' ? (
-          <CardA key={i + 'A'} ml={p.ml} title="Card A" />
-        ) : (
-          <CardB key={i + 'B'} ml={p.ml} title="Card B" />
+      {pattern.map((p, i) => {
+        const t = mockTestimonials[i % mockTestimonials.length]
+        return (
+          <TestimonialCard key={i + '-' + p.type} t={t} size={p.type} ml={p.ml} />
         )
-      )}
+      })}
     </div>
   );
 }
 
-/* --- cards --- */
-function CardA({ ml = 0, title = 'A' }: { ml?: number; title?: string }) {
-  return (
-    <a
-      href="#"
-      style={{ marginLeft: ml }}
-      className="
-        block w-[305px] h-[275px] rounded-[22px]
-        border border-white/10 bg-white/[.035]
-        hover:bg-white/[.06] transition
-        text-white/75 text-lg
-        flex items-center justify-center
-      "
-      aria-label={title}
-      title={title}
-    >
-      {title}
-    </a>
-  );
-}
-
-function CardB({ ml = 0, title = 'B' }: { ml?: number; title?: string }) {
-  return (
-    <a
-      href="#"
-      style={{ marginLeft: ml }}
-      className="
-        block w-[305px] h-[295px] rounded-[22px]
-        border border-white/10 bg-white/[.035]
-        hover:bg-white/[.06] transition
-        text-white/75 text-lg
-        flex items-center justify-center
-      "
-      aria-label={title}
-      title={title}
-    >
-      {title}
-    </a>
-  );
-}
+/* cards moved to TestimonialCard */
