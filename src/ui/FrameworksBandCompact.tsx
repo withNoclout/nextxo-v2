@@ -25,7 +25,7 @@ export function FrameworksBandCompact() {
       </div>
 
       {/* Right icon rail (starts at x = 420px by grid) */}
-      <ul className="flex items-center gap-5 justify-start">
+  <ul className="m-0 p-0 list-none flex items-center gap-5 justify-start">
         {items.map(({ label, Icon }) => {
           const active = activeName === label
           return (
