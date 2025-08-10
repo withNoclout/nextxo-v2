@@ -89,45 +89,66 @@ function ButtonGreen({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ---------- mega menu (with 20px row spacing) ---------- */
+/* ---------- mega menu (controlled with 1s close timer) ---------- */
 function Mega({ label }: { label: string }) {
+  const [open, setOpen] = React.useState(false)
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const id = React.useId()
+
+  const openNow = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setOpen(true)
+  }
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    closeTimer.current = setTimeout(() => setOpen(false), 1000)
+  }
+
   return (
-    <div className="relative group">
-      <button className="inline-flex items-center gap-1.5 text-white/80 hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded">
+    <div className="relative" onMouseEnter={openNow} onMouseLeave={scheduleClose}>
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen(v => !v)}
+        onFocus={openNow}
+        onBlur={scheduleClose}
+        className="inline-flex items-center gap-1.5 text-white/80 hover:text-white outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded h-[30px]"
+      >
         {label}
         <ChevronDown className="h-4 w-4" />
       </button>
 
+      {/* panel */}
       <div
-        className="
-          invisible opacity-0 translate-y-2
-          group-hover:visible group-hover:opacity-100 group-hover:translate-y-0
-          focus-within:visible focus-within:opacity-100 focus-within:translate-y-0
-          transition
-          absolute left-0 top-[calc(100%+10px)] z-50
-          w-[920px] rounded-2xl border border-white/10
-          bg-[#0E0E0E]/95 backdrop-blur-md
-          shadow-[0_18px_44px_rgba(0,0,0,.5)]
-          p-5
-        "
+        id={id}
+        onMouseEnter={openNow}
+        onMouseLeave={scheduleClose}
+        className={[
+          'absolute left-0 top-[calc(100%+10px)] z-50 w-[920px]',
+          'rounded-2xl border border-white/10 bg-[#0E0E0E]/95 backdrop-blur-md',
+          'shadow-[0_18px_44px_rgba(0,0,0,.5)] p-5 transition',
+          open ? 'visible opacity-100 translate-y-0' : 'invisible opacity-0 translate-y-2',
+        ].join(' ')}
       >
         <div className="grid grid-cols-12 gap-6">
-          {/* Left: products */}
+          {/* PRODUCTS */}
           <div className="col-span-6">
             <SectionTitle>PRODUCTS</SectionTitle>
             <ul className="space-y-5 leading-[20px]">
               {[
-                ["Database", "Fully portable Postgres database"],
-                ["Authentication", "User management out of the box"],
-                ["Storage", "Serverless storage for any media"],
-                ["Edge Functions", "Deploy code globally on the edge"],
-                ["Realtime", "Synchronize and broadcast events"],
-              ].map(([t,d]) => (
+                ['Database', 'Fully portable Postgres database'],
+                ['Authentication', 'User management out of the box'],
+                ['Storage', 'Serverless storage for any media'],
+                ['Edge Functions', 'Deploy code globally on the edge'],
+                ['Realtime', 'Synchronize and broadcast events'],
+              ].map(([t, d]) => (
                 <li key={t as string}>
-                  <a href="#" className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
+                  <a href="#" className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
                     <SquareIcon className="h-10 w-10 stroke-white/50" />
                     <div>
-                      <div className="text-white font-medium">{t}</div>
+                      {/* text goes GREEN on hover/focus */}
+                      <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{t}</div>
                       <div className="text-white/60 text-sm">{d}</div>
                     </div>
                   </a>
@@ -136,21 +157,21 @@ function Mega({ label }: { label: string }) {
             </ul>
           </div>
 
-          {/* Middle: modules */}
+          {/* MODULES */}
           <div className="col-span-3">
             <SectionTitle>MODULES</SectionTitle>
             <ul className="space-y-5 leading-[20px]">
               {[
-                ["Vector", "AI toolkit for embeddings"],
-                ["Cron", "Recurring jobs"],
-                ["Queues", "Durable message queues"],
-                ["Features", "Explore everything"],
-              ].map(([t,d]) => (
+                ['Vector', 'AI toolkit for embeddings'],
+                ['Cron', 'Recurring jobs'],
+                ['Queues', 'Durable message queues'],
+                ['Features', 'Explore everything'],
+              ].map(([t, d]) => (
                 <li key={t as string}>
-                  <a href="#" className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
+                  <a href="#" className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
                     <CubeIcon className="h-10 w-10 stroke-white/50" />
                     <div>
-                      <div className="text-white font-medium">{t}</div>
+                      <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{t}</div>
                       <div className="text-white/60 text-sm">{d}</div>
                     </div>
                   </a>
@@ -159,26 +180,30 @@ function Mega({ label }: { label: string }) {
             </ul>
           </div>
 
-          {/* Right: stories & compare */}
+          {/* STORIES / COMPARE */}
           <div className="col-span-3">
             <SectionTitle>CUSTOMER STORIES</SectionTitle>
             <a href="#" className="block p-3 rounded-lg border border-white/10 hover:bg-white/5">
-              <div className="text-white font-medium">Kayhan Space 8× speed</div>
+              <div className="text-white font-medium hover:text-emerald-400">Kayhan Space 8× speed</div>
               <div className="text-white/60 text-sm">after moving to NetXO</div>
             </a>
 
             <div className="h-4" />
             <SectionTitle>COMPARE NETXO</SectionTitle>
             <ul className="space-y-5 leading-[20px]">
-              {["NetXO vs Firebase","NetXO vs Heroku Postgres","NetXO vs Auth0"].map(t => (
-                <li key={t}><a href="#" className="text-white/80 hover:text-white">{t}</a></li>
+              {['NetXO vs Firebase', 'NetXO vs Heroku Postgres', 'NetXO vs Auth0'].map((t) => (
+                <li key={t}>
+                  <a href="#" className="text-white/80 hover:text-emerald-400">
+                    {t}
+                  </a>
+                </li>
               ))}
             </ul>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
