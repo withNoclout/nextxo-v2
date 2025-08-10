@@ -4,7 +4,7 @@ export default function StayProductive() {
   return (
     <section
       id="stay-productive"
-      className="mx-auto max-w-[1385px] px-6 text-center"
+      className="mt-[150px] mx-auto max-w-[1385px] px-6 text-center"
     >
       {/* Single heading in two lines, 30px */}
       <h2 className="text-[30px] leading-tight font-semibold text-white">
