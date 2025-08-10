@@ -1,6 +1,7 @@
 import { Footer } from './Footer'
 import TopBar from './TopBar'
 import { PageFade } from './Page'
+import BottomCta from '../components/BottomCta'
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,9 +12,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </PageFade>
       </main>
-      {/* safety space if any section used negative margins; adjust/remove if not needed */}
-      <div className="h-8" />
       <div className="mt-auto">
+        <BottomCta />
         <Footer />
       </div>
     </div>
