@@ -311,3 +311,24 @@ body {
 .ticker:hover .brand-track {
   animation-play-state: paused;
 }
+
+/* --- Shimmer skeleton utility --- */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton {
+  position: relative;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  overflow: hidden;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.8s linear infinite;
+}

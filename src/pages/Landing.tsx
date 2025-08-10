@@ -9,6 +9,7 @@ import { CommunityWithHalfFade } from '../ui/CommunityWithHalfFade'
 import { ScrollingABGrid } from '../ui/ScrollingABGrid'
 import Layout from '../ui/Layout'
 import { Hero } from '../ui/Hero'
+import StayProductive from '../components/StayProductive'
 
 export default function Landing() {
   return (
@@ -27,6 +28,8 @@ export default function Landing() {
   <TemplatesGrid />
   {/* Dashboard heading sits 150px under the templates grid */}
   <DashboardHeading />
+  {/* Stay Productive panel */}
+  <StayProductive />
       {/* Community + Half Fade wrapper with scrolling section as child */}
       <CommunityWithHalfFade>
         <ScrollingABGrid />
