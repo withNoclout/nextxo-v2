@@ -1,6 +1,6 @@
-export default function ComingSoonDashboard() {
+export default function ComingSoonDashboard({ className = '' }: { className?: string }) {
   return (
-    <div className="mt-[200px] flex justify-center">
+    <div className={`flex justify-center ${className}`}>
       <div
         className="
           relative w-[1150px] h-[670px]

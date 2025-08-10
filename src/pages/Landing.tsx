@@ -4,7 +4,6 @@ import { CustomerStories } from '../ui/CustomerStories'
 import { BrandLine } from '../ui/BrandLine'
 import { FreshBuildPanel } from '../ui/FreshBuildPanel'
 import { TemplatesGrid } from '../ui/TemplatesGrid'
-import { DashboardHeading } from '../ui/DashboardHeading'
 import { CommunityWithHalfFade } from '../ui/CommunityWithHalfFade'
 import { ScrollingABGrid } from '../ui/ScrollingABGrid'
 import Layout from '../ui/Layout'
@@ -26,9 +25,8 @@ export default function Landing() {
   <FreshBuildPanel />
   {/* Templates grid sits 60px under Fresh build panel */}
   <TemplatesGrid />
-  {/* Dashboard heading sits 150px under the templates grid */}
-  <DashboardHeading />
-  {/* Stay Productive panel */}
+  {/* (removed) Old dashboard heading to avoid duplicate copy */}
+  {/* Stay Productive panel (single source of heading + coming-soon) */}
   <StayProductive />
       {/* Community + Half Fade wrapper with scrolling section as child */}
       <CommunityWithHalfFade>

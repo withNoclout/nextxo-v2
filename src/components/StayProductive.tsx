@@ -2,15 +2,22 @@ import ComingSoonDashboard from './ComingSoonDashboard'
 
 export default function StayProductive() {
   return (
-    <section className="mx-auto max-w-[1385px] px-6 text-center">
+    <section
+      id="stay-productive"
+      className="mx-auto max-w-[1385px] px-6 text-center"
+    >
+      {/* Single heading in two lines, 30px */}
       <h2 className="text-[30px] leading-tight font-semibold text-white">
         Stay productive and manage your app
-        <br />
-        <span className="text-white/70">without leaving the dashboard</span>
       </h2>
+      <p className="mt-[25px] text-[30px] leading-tight text-white/70">
+        without leaving the dashboard
+      </p>
 
-      {/* 200px below the text */}
-      <ComingSoonDashboard />
+      {/* Coming soon dashboard — 200px below heading, and only 120px space to next panel */}
+      <div className="mt-[200px] mb-[120px]">
+        <ComingSoonDashboard />
+      </div>
     </section>
   )
 }

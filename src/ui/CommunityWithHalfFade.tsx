@@ -40,7 +40,7 @@ export function CommunityWithHalfFade({ children }: { children: React.ReactNode 
   } as React.CSSProperties
 
   return (
-    <section ref={wrapRef} className="relative w-full overflow-hidden mt-[1080px] font-brooklyn">
+    <section ref={wrapRef} className="relative w-full overflow-hidden font-brooklyn">
       {/* Title */}
       <h2 className="text-[30px] text-center text-white font-semibold">Join the community</h2>
       <p className="mt-[35px] text-[15px] text-center text-white/80">
