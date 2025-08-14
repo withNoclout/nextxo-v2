@@ -15,11 +15,11 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Main footer */}
+      {/* Main footer with 200px spacing between column headings */}
       <div className="border-t border-white/10">
-        <div className="max-w-[1375px] mx-auto px-6 py-16 grid grid-cols-12 gap-8">
+        <div className="max-w-[1375px] mx-auto px-6 py-16 flex flex-wrap md:flex-nowrap">
           {/* Brand + socials */}
-          <div className="col-span-12 md:col-span-3 flex flex-col gap-6">
+          <div className="w-full md:w-auto flex flex-col gap-6 md:mr-16 mb-12 md:mb-0">
             <div className="flex items-center gap-3">
               <div className="h-7 w-7 rounded-sm bg-[#22c55e] grid place-items-center text-black font-bold">N</div>
               <span className="text-white text-xl font-semibold">NetXO</span>
@@ -28,12 +28,14 @@ export function Footer() {
               <IconX/> <IconGitHub/> <IconDiscord/> <IconYouTube/>
             </div>
           </div>
-
-          <FooterCol title="Product" links={["Monitoring", "Sensors", "Pipelines", "Realtime", "Storage", "Forecasts", "Pricing"]}/>
-          <FooterCol title="Solutions" links={["Enterprises", "Manufacturing", "Supply Chain", "Startups", "ESG Teams", "Energy"]}/>
-          <FooterCol title="Resources" links={["Blog", "Support", "System Status", "Integrations", "Security & Compliance", "DPA"]}/>
-          <FooterCol title="Developers" links={["Documentation", "API & SDKs", "Changelog", "Open Source", "Careers"]}/>
-          <FooterCol title="Company" links={["About", "General Availability", "Terms", "Privacy", "Acceptable Use", "SLA"]}/>
+          {/* Columns container */}
+          <div className="flex flex-wrap md:flex-nowrap gap-y-12 gap-[200px]">
+            <FooterCol title="Product" links={["Monitoring", "Sensors", "Pipelines", "Realtime", "Storage", "Forecasts", "Pricing"]}/>
+            <FooterCol title="Solutions" links={["Enterprises", "Manufacturing", "Supply Chain", "Startups", "ESG Teams", "Energy"]}/>
+            <FooterCol title="Resources" links={["Blog", "Support", "System Status", "Integrations", "Security & Compliance", "DPA"]}/>
+            <FooterCol title="Developers" links={["Documentation", "API & SDKs", "Changelog", "Open Source", "Careers"]}/>
+            <FooterCol title="Company" links={["About", "General Availability", "Terms", "Privacy", "Acceptable Use", "SLA"]}/>
+          </div>
         </div>
       </div>
 
