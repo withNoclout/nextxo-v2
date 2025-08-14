@@ -332,3 +332,22 @@ body {
   transform: translateX(-100%);
   animation: shimmer 1.8s linear infinite;
 }
+
+/* Uniform testimonial grid (exact 15px spacing) */
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+  padding: 15px;
+}
+.testimonial-card {
+  background: #111;
+  border-radius: 12px;
+  padding: 16px;
+  outline: 1px solid rgba(255,255,255,0.1);
+  position: relative;
+  color: #e5e5e5;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.testimonial-card strong { color: #fff; }
