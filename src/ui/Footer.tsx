@@ -1,64 +1,63 @@
+const menus = [
+  { title: 'Product', items: ['Monitoring','Sensors','Pipelines','Realtime','Storage','Forecasts','Pricing'] },
+  { title: 'Solutions', items: ['Enterprises','Manufacturing','Supply Chain','Startups','ESG Teams','Energy'] },
+  { title: 'Resources', items: ['Blog','Support','System Status','Integrations','Security & Compliance','DPA'] },
+  { title: 'Developers', items: ['Documentation','API & SDKs','Changelog','Open Source','Careers'] },
+  { title: 'Company', items: ['About','General Availability','Terms','Privacy','Acceptable Use','SLA'] },
+];
+
 export function Footer() {
-  const menus: { head: string; items: string[] }[] = [
-    { head: 'Product', items: ['Monitoring','Sensors','Pipelines','Realtime','Storage','Forecasts','Pricing'] },
-    { head: 'Solutions', items: ['Enterprises','Manufacturing','Supply Chain','Startups','ESG Teams','Energy'] },
-    { head: 'Resources', items: ['Blog','Support','System Status','Integrations','Security & Compliance','DPA'] },
-    { head: 'Developers', items: ['Documentation','API & SDKs','Changelog','Open Source','Careers'] },
-    { head: 'Company', items: ['About','General Availability','Terms','Privacy','Acceptable Use','SLA'] },
-  ];
 
   return (
-    <footer className="footer">
-      {/* Security ribbon (unchanged) */}
-      <div className="border-t border-white/10">
-        <div className="max-w-[1375px] mx-auto px-6 py-4 text-sm flex flex-wrap items-center gap-6 justify-center sm:justify-between">
-          <p className="text-white/80">
-            We protect your data.{' '}<a href="#" className="text-[#22c55e] hover:opacity-90">More on Security</a>
-          </p>
-          <ul className="flex items-center gap-6 text-white/60">
-            <li className="whitespace-nowrap">✓ SOC2 Type 2 <span className="text-white/40">Certified</span></li>
-            <li className="whitespace-nowrap">✓ HIPAA <span className="text-white/40">Compliant</span></li>
-          </ul>
+    <footer className="w-full px-6 pb-16 mt-[100px]">
+      <div className="max-w-7xl w-full mx-auto flex items-start justify-between">
+        {/* Brand block */}
+        <div className="shrink-0 flex flex-col gap-6">
+          <div className="flex items-center gap-3">
+            <div className="h-7 w-7 rounded-sm bg-emerald-500 grid place-items-center text-black font-bold">N</div>
+            <span className="text-white text-xl font-semibold">NetXO</span>
+          </div>
+          <div className="flex items-center gap-5 text-white/60">
+            <IconX/> <IconGitHub/> <IconDiscord/> <IconYouTube/>
+          </div>
+        </div>
+
+        {/* Menus */}
+        <div className="hidden lg:grid grid-flow-col auto-cols-max gap-x-[200px]">
+          {menus.map(m => (
+            <nav key={m.title} className="text-left">
+              <h4 className="text-[15px] font-medium text-neutral-200 tracking-tight">{m.title}</h4>
+              <ul className="mt-[40px] space-y-[25px]">
+                {m.items.map(item => (
+                  <li key={item}><a href="#" className="text-[15px] font-normal text-neutral-400 hover:text-neutral-200 transition-colors">{item}</a></li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
       </div>
 
-      {/* Main brand + menus (pixel-spec) */}
-      <div className="border-t border-white/10">
-        <div className="footer__inner">
-          <div className="footer__brand">
-            <div className="footer__logoMark" aria-label="NetXO logo">N</div>
-            <span className="footer__brandName">NetXO</span>
-            <div className="footer__socials">
-              <a href="#" aria-label="X"><IconX/></a>
-              <a href="#" aria-label="GitHub"><IconGitHub/></a>
-              <a href="#" aria-label="Discord"><IconDiscord/></a>
-              <a href="#" aria-label="YouTube"><IconYouTube/></a>
-            </div>
+      {/* Mobile / tablet stacked menus */}
+      <div className="lg:hidden max-w-7xl mx-auto mt-16 grid grid-cols-2 gap-y-8 gap-x-16">
+        {menus.map(m => (
+          <div key={m.title}>
+            <h4 className="text-[15px] font-medium text-neutral-200 tracking-tight">{m.title}</h4>
+            <ul className="mt-6 space-y-4">
+              {m.items.map(item => (
+                <li key={item}><a href="#" className="text-[14px] font-normal text-neutral-400 hover:text-neutral-200 transition-colors">{item}</a></li>
+              ))}
+            </ul>
           </div>
-          <nav className="footer__menus" aria-label="Footer navigation">
-            {menus.map(m => (
-              <section className="footer__menu" key={m.head}>
-                <h4 className="footer__head">{m.head}</h4>
-                <ul className="footer__list">
-                  {m.items.map(it => (
-                    <li key={it}><a href="#">{it}</a></li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </nav>
-        </div>
+        ))}
       </div>
 
-      {/* Bottom bar */}
-      <div className="border-t border-white/10">
-        <div className="max-w-[1375px] mx-auto px-6 py-6 text-xs text-white/60 flex flex-wrap items-center justify-between gap-4">
-          <span>© {new Date().getFullYear()} NetXO, Inc.</span>
-          <div className="flex items-center gap-6">
-            <a href="#" className="hover:text-white">Privacy</a>
-            <a href="#" className="hover:text-white">Terms</a>
-            <a href="#" className="hover:text-white">Security.txt</a>
-          </div>
+      {/* Bottom legal bar */}
+      <div className="mt-20 pt-8 border-t border-white/10 text-xs text-white/50 flex flex-col sm:flex-row items-center gap-4 justify-between max-w-7xl mx-auto">
+        <span>© {new Date().getFullYear()} NetXO, Inc.</span>
+        <div className="flex items-center gap-6">
+          <a href="#" className="hover:text-white">Privacy</a>
+          <a href="#" className="hover:text-white">Terms</a>
+          <a href="#" className="hover:text-white">Security.txt</a>
         </div>
       </div>
     </footer>

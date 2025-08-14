@@ -1,4 +1,5 @@
 import { Footer } from './Footer'
+import TrustBar from './TrustBar'
 import TopBar from './TopBar'
 import { PageFade } from './Page'
 import BottomCta from '../components/BottomCta'
@@ -14,6 +15,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </main>
       <div className="mt-auto">
         <BottomCta />
+        <TrustBar />
         <Footer />
       </div>
     </div>
