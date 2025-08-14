@@ -1,10 +1,4 @@
-const menus = [
-  { title: 'Product', items: ['Monitoring','Sensors','Pipelines','Realtime','Storage','Forecasts','Pricing'] },
-  { title: 'Solutions', items: ['Enterprises','Manufacturing','Supply Chain','Startups','ESG Teams','Energy'] },
-  { title: 'Resources', items: ['Blog','Support','System Status','Integrations','Security & Compliance','DPA'] },
-  { title: 'Developers', items: ['Documentation','API & SDKs','Changelog','Open Source','Careers'] },
-  { title: 'Company', items: ['About','General Availability','Terms','Privacy','Acceptable Use','SLA'] },
-];
+import { FooterMenus, menus } from './FooterMenus';
 
 export function Footer() {
 
@@ -22,19 +16,8 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Menus */}
-        <div className="hidden lg:grid grid-flow-col auto-cols-max gap-x-[200px]">
-          {menus.map(m => (
-            <nav key={m.title} className="text-left">
-              <h4 className="text-[15px] font-medium text-neutral-200 tracking-tight">{m.title}</h4>
-              <ul className="mt-[40px] space-y-[25px]">
-                {m.items.map(item => (
-                  <li key={item}><a href="#" className="text-[15px] font-normal text-neutral-400 hover:text-neutral-200 transition-colors">{item}</a></li>
-                ))}
-              </ul>
-            </nav>
-          ))}
-        </div>
+  {/* Menus (fixed 200px panels) */}
+  <FooterMenus />
       </div>
 
       {/* Mobile / tablet stacked menus */}
@@ -42,9 +25,9 @@ export function Footer() {
         {menus.map(m => (
           <div key={m.title}>
             <h4 className="text-[15px] font-medium text-neutral-200 tracking-tight">{m.title}</h4>
-            <ul className="mt-6 space-y-4">
+            <ul className="mt-10 space-y-5">{/* preserve 40px + 20px on mobile */}
               {m.items.map(item => (
-                <li key={item}><a href="#" className="text-[14px] font-normal text-neutral-400 hover:text-neutral-200 transition-colors">{item}</a></li>
+                <li key={item}><a href="#" className="text-[15px] font-normal text-neutral-400 hover:text-neutral-200 transition-colors">{item}</a></li>
               ))}
             </ul>
           </div>
