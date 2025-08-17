@@ -1,5 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import MonitoringIcon from '../components/icons/MonitoringIcon'
 
 export default function TopBar() {
   const [activeMenu, setActiveMenu] = React.useState<null | 'Product' | 'Developers' | 'Solutions'>(null)
@@ -23,10 +24,10 @@ export default function TopBar() {
           <div className="h-full flex items-center justify-between">
             {/* left */}
             <div className="flex items-center">
-              <a className="flex items-center gap-3" href="#">
+              <Link to="/" aria-label="Go to NetXO home" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
                 <div className="h-7 w-7 rounded-sm bg-[#22c55e] grid place-items-center text-black font-bold">N</div>
                 <span className="text-white text-lg font-semibold">NetXO</span>
-              </a>
+              </Link>
 
               {/* nav: keep pointer inside container to avoid closing */}
               <nav
@@ -185,7 +186,13 @@ function Mega({ label, open, onOpen, onKeepOpen, onMaybeClose }: {
                         aria-current={location.pathname === it.href ? 'page' : undefined}
                         className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                       >
-                        <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        {it.id === 'monitoring' ? (
+                          <div className="h-10 w-10 rounded-xl bg-white/[0.04] ring-1 ring-white/[0.08] flex items-center justify-center shrink-0">
+                            <MonitoringIcon className="text-white/80" size={20} />
+                          </div>
+                        ) : (
+                          <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        )}
                         <div>
                           <div className={(location.pathname === it.href ? 'text-emerald-400 ' : 'text-white ') + 'font-medium group-hover:text-emerald-400 group-focus:text-emerald-400'}>{it.title}</div>
                           <div className="text-white/60 text-sm">{it.desc}</div>
