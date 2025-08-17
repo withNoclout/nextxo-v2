@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
 export default function TopBar() {
   const [activeMenu, setActiveMenu] = React.useState<null | 'Product' | 'Developers' | 'Solutions'>(null)
@@ -167,23 +168,41 @@ function Mega({ label, open, onOpen, onKeepOpen, onMaybeClose }: {
           <div className="col-span-6">
             <SectionTitle>PRODUCTS</SectionTitle>
             <ul className="space-y-5 leading-[20px]">
-              {[
-                ['Database', 'Fully portable Postgres database'],
-                ['Authentication', 'User management out of the box'],
-                ['Storage', 'Serverless storage for any media'],
-                ['Edge Functions', 'Deploy code globally on the edge'],
-                ['Realtime', 'Synchronize and broadcast events'],
-              ].map(([t, d]) => (
-                <li key={t as string}>
-                  <a href="#" className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
-                    <SquareIcon className="h-10 w-10 stroke-white/50" />
-                    <div>
-                      <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{t}</div>
-                      <div className="text-white/60 text-sm">{d}</div>
-                    </div>
-                  </a>
-                </li>
-              ))}
+              {(() => {
+                const location = useLocation();
+                const items: { id: string; title: string; desc: string; href?: string }[] = [
+                  { id: 'db', title: 'Database', desc: 'Fully portable Postgres database' },
+                  { id: 'monitoring', title: 'Monitoring', desc: 'Real-time carbon monitoring', href: '/monitoring' },
+                  { id: 'storage', title: 'Storage', desc: 'Serverless storage for any media' },
+                  { id: 'edge', title: 'Edge Functions', desc: 'Deploy code globally on the edge' },
+                  { id: 'realtime', title: 'Realtime', desc: 'Synchronize and broadcast events' },
+                ];
+                return items.map(it => (
+                  <li key={it.id}>
+                    {it.href ? (
+                      <Link
+                        to={it.href}
+                        aria-current={location.pathname === it.href ? 'page' : undefined}
+                        className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
+                      >
+                        <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        <div>
+                          <div className={(location.pathname === it.href ? 'text-emerald-400 ' : 'text-white ') + 'font-medium group-hover:text-emerald-400 group-focus:text-emerald-400'}>{it.title}</div>
+                          <div className="text-white/60 text-sm">{it.desc}</div>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
+                        <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        <div>
+                          <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{it.title}</div>
+                          <div className="text-white/60 text-sm">{it.desc}</div>
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                ));
+              })()}
             </ul>
           </div>
 
