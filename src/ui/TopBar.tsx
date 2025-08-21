@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 export default function TopBar() {
   const [activeMenu, setActiveMenu] = React.useState<null | 'Product' | 'Developers' | 'Solutions'>(null)
@@ -23,10 +23,7 @@ export default function TopBar() {
           <div className="h-full flex items-center justify-between">
             {/* left */}
             <div className="flex items-center">
-              <a className="flex items-center gap-3" href="#">
-                <div className="h-7 w-7 rounded-sm bg-[#22c55e] grid place-items-center text-black font-bold">N</div>
-                <span className="text-white text-lg font-semibold">NetXO</span>
-              </a>
+              <BrandGoBack />
 
               {/* nav: keep pointer inside container to avoid closing */}
               <nav
@@ -76,6 +73,30 @@ export default function TopBar() {
       <div className="h-[65px]" />
     </>
   )
+}
+
+/* Brand button that navigates back (or home if no history) */
+function BrandGoBack() {
+  const navigate = useNavigate();
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 rounded"
+      title="Go back"
+    >
+      <div className="h-7 w-7 rounded-sm bg-[#22c55e] grid place-items-center text-black font-bold transition group-hover:brightness-110">N</div>
+      <span className="text-white text-lg font-semibold group-hover:text-emerald-400">NetXO</span>
+    </button>
+  );
 }
 
 /* ---------- primitives ---------- */
@@ -185,7 +206,11 @@ function Mega({ label, open, onOpen, onKeepOpen, onMaybeClose }: {
                         aria-current={location.pathname === it.href ? 'page' : undefined}
                         className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                       >
-                        <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        {it.id === 'monitoring' ? (
+                          <MonitoringIcon className="h-10 w-10 stroke-white/50" />
+                        ) : (
+                          <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        )}
                         <div>
                           <div className={(location.pathname === it.href ? 'text-emerald-400 ' : 'text-white ') + 'font-medium group-hover:text-emerald-400 group-focus:text-emerald-400'}>{it.title}</div>
                           <div className="text-white/60 text-sm">{it.desc}</div>
@@ -193,7 +218,11 @@ function Mega({ label, open, onOpen, onKeepOpen, onMaybeClose }: {
                       </Link>
                     ) : (
                       <div className="group flex items-start gap-3 p-2 rounded-lg hover:bg-white/5">
-                        <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        {it.id === 'monitoring' ? (
+                          <MonitoringIcon className="h-10 w-10 stroke-white/50" />
+                        ) : (
+                          <SquareIcon className="h-10 w-10 stroke-white/50" />
+                        )}
                         <div>
                           <div className="text-white font-medium group-hover:text-emerald-400 group-focus:text-emerald-400">{it.title}</div>
                           <div className="text-white/60 text-sm">{it.desc}</div>
@@ -271,4 +300,13 @@ function SquareIcon({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) 
 }
 function CubeIcon({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) {
   return (<svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.6" {...rest}><path d="M12 2l9 5-9 5-9-5 9-5z"/><path d="M3 7v10l9 5 9-5V7"/></svg>);
+}
+function MonitoringIcon({ className = "", ...rest }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" {...rest}>
+      <rect x="3" y="4" width="18" height="12" rx="2" />
+      <path d="M4 12h3l2-3 3 6 2-3h6" />
+      <path d="M8 20h8" />
+    </svg>
+  )
 }
