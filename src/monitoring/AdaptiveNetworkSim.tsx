@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 /* AdaptiveNetworkSim
    - Graph-based routing (4x4 grid of nodes) with Dijkstra shortest path
@@ -69,6 +69,7 @@ interface Car {
   detourBias: number // random bias factor to encourage alternate routes
   waiting: boolean
   lastRerouteAt: number
+  bornAt: number
 }
 
 // Helper: canonical edge key (undirected)
@@ -176,22 +177,29 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
   const scale = Math.min(panelW / WORLD_W, panelH / WORLD_H)
 
   // Spawner
+  // Helper: edge node ids
+  const edgeNodeIds = useMemo(()=> nodes.filter(n=>{
+    const [ , r, c ] = n.id.split('_')
+    const ri = parseInt(r,10), ci = parseInt(c,10)
+    return ri===0 || ci===0 || ri===GRID_N-1 || ci===GRID_N-1
+  }).map(n=>n.id), [nodes])
+
   useEffect(() => {
     const iv = setInterval(() => {
       setCars(prev => {
         if (prev.length >= MAX_CARS) return prev
-        const start = nodes[Math.floor(Math.random() * nodes.length)].id
+        const start = edgeNodeIds[Math.floor(Math.random() * edgeNodeIds.length)]
         let dest = start
-        while (dest === start) dest = nodes[Math.floor(Math.random() * nodes.length)].id
+        while (dest === start) dest = edgeNodeIds[Math.floor(Math.random() * edgeNodeIds.length)]
         const bias = Math.random() < 0.15 ? (0.5 + Math.random()) : 0 // some cars take longer path
         const path = shortestPath(start, dest, graph, () => 1, bias) || [start, dest]
         const speed = 90 + Math.random() * 50
-        const car: Car = { id: gid++, path, segIndex: 0, progress: 0, speed, start, dest, detourBias: bias, waiting: false, lastRerouteAt: performance.now() }
+        const car: Car = { id: gid++, path, segIndex: 0, progress: 0, speed, start, dest, detourBias: bias, waiting: false, lastRerouteAt: performance.now(), bornAt: performance.now() }
         return [...prev, car]
       })
     }, SPAWN_INTERVAL_MS)
     return () => clearInterval(iv)
-  }, [graph, nodes])
+  }, [graph, nodes, edgeNodeIds])
 
   // Simulation loop
   useEffect(() => {
@@ -219,10 +227,7 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
       const nextCars: Car[] = []
       for (const car of prev) {
         let c = { ...car }
-        if (c.segIndex >= c.path.length - 1) {
-          // already at destination
-          continue
-        }
+  if (c.segIndex >= c.path.length - 1) continue // safety
         const a = graph.byId[c.path[c.segIndex]]
         const b = graph.byId[c.path[c.segIndex + 1]]
         const len = segmentLength(a, b)
@@ -261,10 +266,7 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
           c.segIndex++
           c.progress = 0
           c.waiting = false
-          if (c.segIndex >= c.path.length - 1) {
-            // reached destination
-            continue
-          }
+          if (c.segIndex >= c.path.length - 1) continue
         }
         nextCars.push(c)
       }
@@ -380,18 +382,30 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
 
   // Car rendering
   function renderCars() {
-    const rendered: React.ReactNode[] = []
-    for (const car of cars) {
-      if (car.segIndex >= car.path.length - 1) continue
-      const a = graph.byId[car.path[car.segIndex]]
-      const b = graph.byId[car.path[car.segIndex + 1]]
-      const x = a.x + (b.x - a.x) * car.progress
-      const y = a.y + (b.y - a.y) * car.progress
-      rendered.push(
-        <motion.div key={car.id} className="absolute" initial={{ opacity: 0 }} animate={{ opacity: 1, x, y }} transition={{ type: 'tween', duration: 0.15 }} style={{ width: CAR_SIZE, height: CAR_SIZE, marginLeft: -CAR_SIZE / 2, marginTop: -CAR_SIZE / 2, borderRadius: 2, background: '#10b981', boxShadow: '0 0 6px rgba(16,185,129,0.9), 0 0 2px 1px rgba(16,185,129,0.5)' }} />
-      )
-    }
-    return rendered
+    return (
+      <AnimatePresence>
+        {cars.map(car => {
+          if (car.segIndex >= car.path.length - 1) return null
+          const a = graph.byId[car.path[car.segIndex]]
+          const b = graph.byId[car.path[car.segIndex + 1]]
+          const x = a.x + (b.x - a.x) * car.progress
+          const y = a.y + (b.y - a.y) * car.progress
+          const life = (performance.now() - car.bornAt) / 1000
+          const isExiting = car.segIndex === car.path.length - 2 && car.progress > 0.92
+          return (
+            <motion.div
+              key={car.id}
+              className="absolute"
+              initial={{ opacity: 0, scale: 0.4 }}
+              animate={{ opacity: isExiting? 0.2:1, scale: isExiting?0.7:1, x, y }}
+              exit={{ opacity: 0, scale: 0.3, transition:{ duration:0.4 } }}
+              transition={{ type:'tween', duration:0.25 }}
+              style={{ width: CAR_SIZE, height: CAR_SIZE, marginLeft: -CAR_SIZE/2, marginTop: -CAR_SIZE/2, borderRadius:2, background:'#10b981', boxShadow:'0 0 6px rgba(16,185,129,0.9),0 0 2px 1px rgba(16,185,129,0.5)' }}
+            />
+          )
+        })}
+      </AnimatePresence>
+    )
   }
 
   const outerClasses = frameless ? 'relative w-full h-full overflow-hidden' : 'relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black/50'
@@ -403,14 +417,24 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
         )}
         {/* Links */}
         {renderLinks()}
-        {/* Nodes */}
-        {nodes.map(n => (
-          <div key={n.id} className="absolute" style={{ left: n.x, top: n.y, transform: 'translate(-50%,-50%)' }}>
-            <div style={{ width: NODE_R * 2, height: NODE_R * 2, background: 'radial-gradient(circle at 30% 30%, rgba(16,185,129,0.9), rgba(16,185,129,0.15))', borderRadius: '50%', boxShadow: '0 0 10px rgba(16,185,129,0.7),0 0 2px 1px rgba(16,185,129,0.4)', position:'relative' }}>
-              <span style={{ position:'absolute', top:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)', fontSize:9, color:'rgba(255,255,255,0.55)', whiteSpace:'nowrap' }}>{n.label}</span>
-            </div>
-          </div>
-        ))}
+        {/* Nodes with spawn/despawn animation */}
+        <AnimatePresence>
+          {nodes.map(n => (
+            <motion.div
+              key={n.id}
+              className="absolute"
+              initial={{ opacity:0, scale:0.3 }}
+              animate={{ opacity:1, scale:1 }}
+              exit={{ opacity:0, scale:0.25, transition:{ duration:0.45 } }}
+              transition={{ duration:0.5, type:'spring', stiffness:140, damping:18 }}
+              style={{ left:n.x, top:n.y, transform:'translate(-50%,-50%)' }}
+            >
+              <div style={{ width: NODE_R*2, height: NODE_R*2, background:'radial-gradient(circle at 30% 30%, rgba(16,185,129,0.9), rgba(16,185,129,0.15))', borderRadius:'50%', boxShadow:'0 0 10px rgba(16,185,129,0.7),0 0 2px 1px rgba(16,185,129,0.4)', position:'relative' }}>
+                <span style={{ position:'absolute', top:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)', fontSize:9, color:'rgba(255,255,255,0.55)', whiteSpace:'nowrap' }}>{n.label}</span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
         {/* Cars */}
         {renderCars()}
       </div>

@@ -13,18 +13,18 @@ interface UINote { id:number; title:string; detail:string; severity?: 'normal'|'
 
 function NotificationsPanel({ notes }:{ notes: UINote[] }){
   return (
-    <div className="flex flex-col h-full">
+  <div className="flex flex-col h-full w-full">
       <div className="mb-4">
         <h2 className="text-[15px] font-semibold tracking-tight mb-1">Recent Notifications</h2>
         <p className="text-[11px] text-white/60 leading-snug">Live system events & signal insights.</p>
       </div>
       <div className="relative flex-1 min-h-0">
-        <ul className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '520px' }}>
+  <ul className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '520px', paddingRight:4 }}>
           {notes.map(n=> {
             const sev = n.severity || 'normal'
             const border = sev==='block' ? 'border-red-500/60 shadow-[0_0_6px_1px_rgba(239,68,68,0.35)] border-2' : sev==='warn' ? 'border-yellow-400/40 border' : 'border-white/10 border'
             return (
-              <li key={n.id} className={`group flex items-start gap-3 rounded-lg bg-black/30 px-3 py-2 ${border} transition-colors animate-[fadeIn_0.35s_ease]`} style={{ minHeight:56 }}>
+              <li key={n.id} className={`group flex items-start gap-3 rounded-md bg-black/25 px-3 py-2 ${border} transition-colors animate-[fadeIn_0.4s_ease]`} style={{ minHeight:56 }}>
                 <div className="flex-1 min-w-0">
                   <p className="text-[12px] font-medium text-white/85 leading-snug truncate">{n.title}</p>
                   <p className="text-[11px] text-white/45 leading-snug truncate">{n.detail}</p>
