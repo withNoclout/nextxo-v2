@@ -41,6 +41,7 @@ let gid = 1
 
 interface Node {
   id: string
+  label: string
   x: number
   y: number
   neighbors: string[]
@@ -72,6 +73,13 @@ function edgeKey(a: string, b: string) {
   return a < b ? `${a}|${b}` : `${b}|${a}`
 }
 
+const NODE_LABELS = [
+  'Finance','Sales','Marketing','R&D',
+  'Operations','Procurement','Compliance','Quality',
+  'Logistics','Sustainability','Analytics','Growth',
+  'Platform','Data','Energy','Carbon'
+]
+
 function buildGridNodes(): Node[] {
   const xs: number[] = [], ys: number[] = []
   for (let i = 0; i < GRID_N; i++) {
@@ -89,7 +97,8 @@ function buildGridNodes(): Node[] {
       if (c < GRID_N - 1) neighbors.push(`n_${r}_${c + 1}`)
       if (r > 0) neighbors.push(`n_${r - 1}_${c}`)
       if (r < GRID_N - 1) neighbors.push(`n_${r + 1}_${c}`)
-      nodes.push({ id, x, y, neighbors })
+      const labelIndex = r * GRID_N + c
+      nodes.push({ id, label: NODE_LABELS[labelIndex] ?? id, x, y, neighbors })
     }
   }
   return nodes
@@ -299,12 +308,12 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
         if (es.status === 'normal') {
           es.status = 'congested'
           es.congestSince = now
-          if (notify) notify({ id: gid++, type: 'warn', message: `⚠️ Congestion rising on link ${prettyEdge(key)}`, ts: Date.now() })
+          if (notify) notify({ id: gid++, type: 'warn', message: `⚠️ Congestion rising on ${prettyEdge(key)} path`, ts: Date.now() })
         } else if (es.status === 'congested') {
           if (es.congestSince && now - es.congestSince > BLOCK_THRESHOLD_SECONDS * 1000) {
             es.status = 'blocked'
             es.blockedSince = now
-            if (notify) notify({ id: gid++, type: 'block', message: `🔴 Blockage: link ${prettyEdge(key)} closed`, ts: Date.now() })
+            if (notify) notify({ id: gid++, type: 'block', message: `🔴 Blockage: ${prettyEdge(key)} link closed`, ts: Date.now() })
           }
         }
       } else {
@@ -321,7 +330,7 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
             else if (now - es.congestSince > CLEAR_PERSIST_SECONDS * 1000) {
               es.status = 'normal'
               es.congestSince = undefined
-              if (notify) notify({ id: gid++, type: 'clear', message: `🟢 Traffic cleared on link ${prettyEdge(key)}`, ts: Date.now() })
+              if (notify) notify({ id: gid++, type: 'clear', message: `🟢 Traffic cleared: ${prettyEdge(key)} restored`, ts: Date.now() })
             }
           } else {
             es.congestSince = now // reset low counter since it's still moderate
@@ -334,7 +343,9 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
 
   function prettyEdge(key: string) {
     const [a, b] = key.split('|')
-    return `${a.replace('n_', '').replace(/_/g, '')}→${b.replace('n_', '').replace(/_/g, '')}`
+    const na = graph.byId[a]
+    const nb = graph.byId[b]
+    return `${na.label} → ${nb.label}`
   }
 
   // Link drawing helper
@@ -390,7 +401,9 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
         {/* Nodes */}
         {nodes.map(n => (
           <div key={n.id} className="absolute" style={{ left: n.x, top: n.y, transform: 'translate(-50%,-50%)' }}>
-            <div style={{ width: NODE_R * 2, height: NODE_R * 2, background: 'radial-gradient(circle at 30% 30%, rgba(16,185,129,0.9), rgba(16,185,129,0.15))', borderRadius: '50%', boxShadow: '0 0 10px rgba(16,185,129,0.7),0 0 2px 1px rgba(16,185,129,0.4)' }} />
+            <div style={{ width: NODE_R * 2, height: NODE_R * 2, background: 'radial-gradient(circle at 30% 30%, rgba(16,185,129,0.9), rgba(16,185,129,0.15))', borderRadius: '50%', boxShadow: '0 0 10px rgba(16,185,129,0.7),0 0 2px 1px rgba(16,185,129,0.4)', position:'relative' }}>
+              <span style={{ position:'absolute', top:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)', fontSize:9, color:'rgba(255,255,255,0.55)', whiteSpace:'nowrap' }}>{n.label}</span>
+            </div>
           </div>
         ))}
         {/* Cars */}
