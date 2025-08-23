@@ -612,6 +612,8 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
   // Tooltip state
   const [hoverNode,setHoverNode] = useState<string|null>(null)
   const [hoverPos,setHoverPos] = useState<{x:number;y:number}>({x:0,y:0})
+  const [tooltipPulse,setTooltipPulse] = useState<{id:number;color:'red'|'green'|null}>({id:0,color:null})
+  const lastTooltipStatsRef = useRef<{node:string; current:number; pct:number|null} | null>(null)
   function nodeStats(nodeId:string){
     const hour = Math.floor(simMinuteRef.current/60)
     const current = carbonCurrentHourRef.current.get(nodeId)||0
@@ -622,6 +624,21 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
     return { current, yesterday, pct }
   }
   function formatKg(v:number){ return Math.round(v).toLocaleString() }
+  // Track changes to hovered node stats to trigger pulse
+  useEffect(()=>{
+    if (!hoverNode) { lastTooltipStatsRef.current = null; return }
+    const st = nodeStats(hoverNode)
+    const prev = lastTooltipStatsRef.current
+    if (!prev || prev.node!==hoverNode || Math.abs(prev.current - st.current) > 0.5 || (prev.pct??0)!==(st.pct??0)) {
+      // Determine pulse color based on direction of pct change
+      let color: 'red'|'green'|null = null
+      if (st.pct!=null) {
+        if (st.pct > 0.5) color='red'; else if (st.pct < -0.5) color='green'
+      }
+      setTooltipPulse(p=> ({ id:p.id+1, color }))
+      lastTooltipStatsRef.current = { node: hoverNode, current: st.current, pct: st.pct }
+    }
+  },[hoverNode, tick])
   const Tooltip = () => {
     if (!hoverNode) return null
     const stats = nodeStats(hoverNode)
@@ -640,14 +657,24 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
     const color = isUp ? 'text-red-400' : isDown ? 'text-emerald-400' : 'text-white/70'
     const icon = pct==null ? '' : isUp ? '🔺' : isDown ? '🔻' : ''
     return (
-      <motion.div initial={{opacity:0, y:4}} animate={{opacity:1, y:0}} exit={{opacity:0, y:4}} transition={{duration:0.18}} className="pointer-events-none absolute z-40" style={{left:x, top:y, width:WIDTH}}>
-        <div className="rounded-md border border-white/10 bg-black/80 backdrop-blur-sm shadow-lg p-3" style={{fontSize:12,lineHeight:'15px'}}>
-          <div className="font-semibold text-[14px] mb-1 text-white/95 leading-snug truncate">{node.label}</div>
-          <div className="flex justify-between"><span className="text-white/55">Current hour</span><span className="text-white/90 font-medium">{formatKg(stats.current)} kg CO₂</span></div>
-          <div className="flex justify-between"><span className="text-white/55">Yesterday (hr)</span><span className="text-white/70">{stats.yesterday? formatKg(stats.yesterday):'—'} kg CO₂</span></div>
-          <div className="flex justify-between mt-1"><span className="text-white/55">Change</span><span className={`font-medium ${color}`}>{pct==null? '—' : `${pct>0?'+':''}${pct.toFixed(1)}%`} {icon}</span></div>
+      <div className="pointer-events-none absolute z-40" style={{left:x, top:y, width:WIDTH}}>
+        <div className="rounded-md border border-white/10 bg-black shadow-lg p-3 relative overflow-hidden" style={{fontSize:12,lineHeight:'15px'}}>
+          {/* Pulse layer */}
+          {tooltipPulse.color && (
+            <div key={tooltipPulse.id} className={`absolute inset-0 animate-tooltipPulse pointer-events-none`} style={{
+              background: tooltipPulse.color==='red'
+                ? 'radial-gradient(circle at 50% 50%, rgba(239,68,68,0.35), rgba(239,68,68,0) 70%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(16,185,129,0.35), rgba(16,185,129,0) 70%)'
+            }} />
+          )}
+          <div className="relative">
+            <div className="font-semibold text-[14px] mb-1 text-white/95 leading-snug truncate">{node.label}</div>
+            <div className="flex justify-between"><span className="text-white/55">Current hour</span><span className="text-white/90 font-medium">{formatKg(stats.current)} kg CO₂</span></div>
+            <div className="flex justify-between"><span className="text-white/55">Yesterday (hr)</span><span className="text-white/70">{stats.yesterday? formatKg(stats.yesterday):'—'} kg CO₂</span></div>
+            <div className="flex justify-between mt-1"><span className="text-white/55">Change</span><span className={`font-medium ${color}`}>{pct==null? '—' : `${pct>0?'+':''}${pct.toFixed(1)}%`} {icon}</span></div>
+          </div>
         </div>
-      </motion.div>
+      </div>
     )
   }
 
@@ -662,6 +689,10 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
   const labelFont = Math.min(Math.round(desiredLabelScreenPx / Math.max(scale, 0.0001)), 46)
   return (
     <div ref={panelRef} className={`${outerClasses} ${className||''}`}>
+      <style>{`
+        @keyframes tooltipPulseKF { 0% { transform:scale(0.85); opacity:0.55;} 50% { transform:scale(1.05); opacity:0.25;} 100% { transform:scale(1.25); opacity:0;} }
+        .animate-tooltipPulse { animation: tooltipPulseKF 1s ease-out forwards; }
+      `}</style>
       <div style={{ width: WORLD_W, height: WORLD_H, transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`, transformOrigin: 'top left', position: 'relative' }}>
         {!blendBackground && (
           <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.07) 1px, transparent 1px),linear-gradient(90deg, rgba(16,185,129,0.07) 1px, transparent 1px)', backgroundSize: '38px 38px', opacity: 0.9 }} />
@@ -692,8 +723,8 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
         {/* Cars */}
         {renderCars()}
       </div>
-      {/* Tooltip overlay */}
-      <AnimatePresence>{hoverNode && <Tooltip />}</AnimatePresence>
+  {/* Tooltip overlay */}
+  {hoverNode && <Tooltip />}
       {!frameless && (
         <div className="absolute right-2 top-2 text-[10px] bg-black/60 backdrop-blur rounded-md px-2 py-1 border border-emerald-500/20 text-emerald-200 leading-tight">
           <div>Cars {cars.length}</div>
