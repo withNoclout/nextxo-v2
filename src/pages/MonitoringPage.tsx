@@ -5,33 +5,42 @@ import CitySim from '../monitoring/CitySim'
 import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
 
 // Simple placeholder notifications data (could later be sourced dynamically)
-const seedNotifications = [
-  { id: 1, title: 'Signal Phase Shift Applied', detail: 'Adaptive cycle adjusted at 4 junctions', icon: '🔔', time: '2m ago' },
+const seedNotifications: Array<Pick<UINote,'id'|'title'|'detail'|'time'>> = [
+  { id: 1, title: 'Signal Phase Shift Applied', detail: 'Adaptive cycle adjusted at 4 junctions', time: '2m ago' },
 ]
 
-interface UINote { id:number; title:string; detail:string; severity?: 'normal'|'warn'|'block'|'clear'; time:string; count?:number }
+interface UINote {
+  id:number
+  title:string
+  detail:string
+  severity?: 'normal'|'warn'|'block'|'clear'
+  category: 'critical'|'major'|'routine'
+  time:string
+  count?:number
+}
 
 function NotificationsPanel({ notes }:{ notes: UINote[] }){
   return (
     <div className="w-full flex flex-col h-full overflow-hidden" style={{ paddingTop:12, paddingBottom:12 }}>
       <div className="mb-3 px-1 shrink-0">
         <h2 className="text-[15px] font-semibold tracking-tight mb-1">Recent Notifications</h2>
-        <p className="text-[11px] text-white/60 leading-snug">High‑signal system events only.</p>
+        <p className="text-[11px] text-white/60 leading-snug">Critical events ungrouped • others grouped.</p>
       </div>
       <ul className="space-y-2 px-1 overflow-y-auto pr-1" style={{ scrollbarWidth:'thin' }}>
         {notes.map(n=> {
-          const sev = n.severity || 'normal'
-          const border = sev==='block' ? 'border-red-500/60 shadow-[0_0_6px_1px_rgba(239,68,68,0.35)] border-2' : sev==='warn' ? 'border-yellow-400/40 border' : 'border-white/10 border'
+          const border = n.category==='critical'
+            ? 'border-red-500/70 shadow-[0_0_6px_1px_rgba(239,68,68,0.45)] border-2'
+            : n.category==='major'
+              ? 'border-yellow-400/40 border'
+              : 'border-white/10 border'
+          const full = n.detail ? `${n.title}: ${n.detail}` : n.title
+          const line = (n.count && n.count>1) ? `${full} (x${n.count})` : full
           return (
-            <li key={n.id} className={`relative group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease]`}>
-              <div className="flex-1 min-w-0 pr-6">
-                <p className="text-[12px] font-medium text-white/85 leading-snug truncate">{n.title}</p>
-                <p className="text-[11px] text-white/45 leading-snug truncate">{n.detail}</p>
+            <li key={n.id} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease]`}>
+              <div className="flex-1 min-w-0 pr-2">
+                <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{line}</p>
               </div>
               <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
-              {n.count && n.count>1 && (
-                <span className="absolute top-1 right-1 text-[10px] font-semibold text-white/80 bg-white/15 backdrop-blur-sm px-1.5 py-[1px] rounded-md leading-none">×{n.count}</span>
-              )}
             </li>
           )
         })}
@@ -50,29 +59,36 @@ function DashboardShell({ children }: { children: React.ReactNode }){
 }
 
 export default function MonitoringPage() {
-  const [notes,setNotes] = React.useState<UINote[]>(seedNotifications as UINote[])
+  const [notes,setNotes] = React.useState<UINote[]>(() => seedNotifications.map(n=> ({...n, severity:'normal', category:'routine', count:1 })))
   const pushNotification = React.useCallback((e:NotificationEvent)=>{
     const raw = e.message.replace(/^([\u{1F534}🔴⚠️🟢])\s*/u,'').trim()
+    const lower = raw.toLowerCase()
     const title = raw.split(':')[0]?.trim() || 'Update'
-    const detail = raw.split(':').slice(1).join(':').trim() || raw
-    let importance: 'show'|'hide' = 'hide'
-    let severity: UINote['severity'] = 'normal'
-    if (e.type==='block') { importance='show'; severity='block' }
-    else if (e.type==='warn') {
-      if (/(surge|congestion rising|heavy congestion|critical delay)/i.test(raw)) { importance='show'; severity='warn' }
-    }
-    if (e.type==='clear') importance='hide'
-    if (/high ev adoption|traffic cleared|temporary relief/i.test(raw)) importance='hide'
-    if (importance==='hide') return
+    const detail = raw.split(':').slice(1).join(':').trim()
+    // Classification rules
+    let category: UINote['category'] = 'routine'
+    if (/(gridlock|emission spike|node failure|critical delay|blockage|critical congestion|link closed)/i.test(raw)) category='critical'
+    else if (/(heavy congestion|peak-hour surge|congestion rising)/i.test(raw)) category='major'
+    else category='routine'
+    // Map to severity for legacy styling (critical/block, major/warn)
+    let severity: UINote['severity'] = category==='critical' ? 'block' : category==='major' ? 'warn' : 'normal'
+    // Filtering: optionally ignore low-value clears/green adoption unless critical
+    if (/high ev adoption|traffic cleared|temporary relief/i.test(lower)) return
+    if (e.type==='clear' && category!=='critical') return
     setNotes(prev => {
-      const idx = prev.findIndex(n => n.title === title && n.severity===severity)
-      if (idx !== -1) {
-        const copy = [...prev]
-        const ex = copy[idx]
-        copy[idx] = { ...ex, detail, time:'now', count:(ex.count||1)+1 }
+      if (category==='critical') {
+        // Always append (no grouping)
+        return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,49) ]
+      }
+      // Group by title+detail+category signature
+      const keyIdx = prev.findIndex(n => n.category===category && n.title===title && n.detail===detail)
+      if (keyIdx !== -1) {
+        const copy=[...prev]
+        const ex=copy[keyIdx]
+        copy[keyIdx] = { ...ex, time:'now', count:(ex.count||1)+1 }
         return copy
       }
-      return [ { id:e.id, title: title.slice(0,70), detail: detail.slice(0,110), severity, time:'now', count:1 }, ...prev.slice(0,30) ]
+      return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,49) ]
     })
   },[])
   return (
