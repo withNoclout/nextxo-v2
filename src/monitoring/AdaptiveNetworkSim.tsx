@@ -214,6 +214,24 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
   const wasPeakRef = useRef(false)
   const simMinuteRef = useRef(0) // running simulation minute of day (0-1440)
   const startTimeRef = useRef<number | null>(null)
+  // Carbon metrics tracking
+  const carbonCurrentHourRef = useRef<Map<string, number>>(new Map())
+  const carbonBaselineRef = useRef<Map<string, number[]>>(new Map())
+  const prevHourRef = useRef<number>(0)
+  // Initialize baselines once
+  useEffect(()=>{
+    nodes.forEach(n=>{
+      if (!carbonBaselineRef.current.has(n.id)) {
+        const arr:number[] = []
+        for (let h=0; h<24; h++) {
+          // synthetic baseline (80-220) with slight diurnal curve
+            const base = 80 + Math.random()*40 + (h>=7 && h<=19 ? 60+Math.random()*40 : 0)
+            arr.push(Math.round(base))
+        }
+        carbonBaselineRef.current.set(n.id, arr)
+      }
+    })
+  },[nodes])
 
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [panelW, setPanelW] = useState(750)
@@ -326,6 +344,21 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
           if (c.segIndex >= c.path.length - 1) continue
         }
         nextCars.push(c)
+      }
+      // Carbon accumulation (distribute half of segment emission to each node)
+      const curHour = Math.floor(simMinuteRef.current / 60)
+      if (curHour !== prevHourRef.current) {
+        carbonCurrentHourRef.current.clear()
+        prevHourRef.current = curHour
+      }
+      const emissionMap = carbonCurrentHourRef.current
+      for (const car of nextCars) {
+        if (car.segIndex >= car.path.length - 1) continue
+        const na = car.path[car.segIndex]
+        const nb = car.path[car.segIndex + 1]
+        const contrib = car.emission * 0.35 * dt // scale factor to keep numbers reasonable
+        emissionMap.set(na, (emissionMap.get(na)||0) + contrib*0.5)
+        emissionMap.set(nb, (emissionMap.get(nb)||0) + contrib*0.5)
       }
 
       // Spacing per edge
@@ -576,6 +609,48 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
     )
   }
 
+  // Tooltip state
+  const [hoverNode,setHoverNode] = useState<string|null>(null)
+  const [hoverPos,setHoverPos] = useState<{x:number;y:number}>({x:0,y:0})
+  function nodeStats(nodeId:string){
+    const hour = Math.floor(simMinuteRef.current/60)
+    const current = carbonCurrentHourRef.current.get(nodeId)||0
+    const baselineArr = carbonBaselineRef.current.get(nodeId)
+    const yesterday = baselineArr ? baselineArr[hour] : 0
+    let pct: number | null = null
+    if (yesterday > 1) pct = ((current - yesterday)/yesterday)*100
+    return { current, yesterday, pct }
+  }
+  function formatKg(v:number){ return Math.round(v).toLocaleString() }
+  const Tooltip = () => {
+    if (!hoverNode) return null
+    const stats = nodeStats(hoverNode)
+    const node = graph.byId[hoverNode]
+    const w = panelW
+    const h = panelH
+    let x = hoverPos.x + 14
+    let y = hoverPos.y + 18
+    const WIDTH = 250
+    const HEIGHT = 120
+    if (x + WIDTH > w - 8) x = hoverPos.x - WIDTH - 14
+    if (y + HEIGHT > h - 8) y = hoverPos.y - HEIGHT - 14
+    const pct = stats.pct
+    const isUp = pct != null && pct > 0.5
+    const isDown = pct != null && pct < -0.5
+    const color = isUp ? 'text-red-400' : isDown ? 'text-emerald-400' : 'text-white/70'
+    const icon = pct==null ? '' : isUp ? '🔺' : isDown ? '🔻' : ''
+    return (
+      <motion.div initial={{opacity:0, y:4}} animate={{opacity:1, y:0}} exit={{opacity:0, y:4}} transition={{duration:0.18}} className="pointer-events-none absolute z-40" style={{left:x, top:y, width:WIDTH}}>
+        <div className="rounded-md border border-white/10 bg-black/80 backdrop-blur-sm shadow-lg p-3" style={{fontSize:12,lineHeight:'15px'}}>
+          <div className="font-semibold text-[14px] mb-1 text-white/95 leading-snug truncate">{node.label}</div>
+          <div className="flex justify-between"><span className="text-white/55">Current hour</span><span className="text-white/90 font-medium">{formatKg(stats.current)} kg CO₂</span></div>
+          <div className="flex justify-between"><span className="text-white/55">Yesterday (hr)</span><span className="text-white/70">{stats.yesterday? formatKg(stats.yesterday):'—'} kg CO₂</span></div>
+          <div className="flex justify-between mt-1"><span className="text-white/55">Change</span><span className={`font-medium ${color}`}>{pct==null? '—' : `${pct>0?'+':''}${pct.toFixed(1)}%`} {icon}</span></div>
+        </div>
+      </motion.div>
+    )
+  }
+
   const outerClasses = frameless ? 'relative w-full h-full overflow-hidden' : 'relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black/50'
   // compute centered offset after scale to keep world centered in panel
   const scaledW = WORLD_W * scale
@@ -604,6 +679,9 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
               exit={{ opacity:0, scale:0.25, transition:{ duration:0.45 } }}
               transition={{ duration:0.5, type:'spring', stiffness:140, damping:18 }}
               style={{ left:n.x, top:n.y, transform:'translate(-50%,-50%)' }}
+        onMouseEnter={(e)=>{ setHoverNode(n.id); const rect = panelRef.current?.getBoundingClientRect(); if(rect) setHoverPos({x:e.clientX-rect.left,y:e.clientY-rect.top}) }}
+        onMouseMove={(e)=>{ if(!hoverNode) return; const rect = panelRef.current?.getBoundingClientRect(); if(rect) setHoverPos({x:e.clientX-rect.left,y:e.clientY-rect.top}) }}
+        onMouseLeave={()=> setHoverNode(p=> p===n.id? null:p)}
             >
               <div style={{ width: NODE_R*2, height: NODE_R*2, background:'radial-gradient(circle at 30% 30%, rgba(16,185,129,0.9), rgba(16,185,129,0.15))', borderRadius:'50%', boxShadow:'0 0 10px rgba(16,185,129,0.7),0 0 2px 1px rgba(16,185,129,0.4)', position:'relative' }}>
                 <span style={{ position:'absolute', top:'calc(100% + 4px)', left:'50%', transform:'translateX(-50%)', fontSize:labelFont, lineHeight:(labelFont+2)+'px', color:'#f5f7fa', whiteSpace:'nowrap', textShadow:'0 0 3px rgba(0,0,0,0.7)' }}>{n.label}</span>
@@ -614,6 +692,8 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless,
         {/* Cars */}
         {renderCars()}
       </div>
+      {/* Tooltip overlay */}
+      <AnimatePresence>{hoverNode && <Tooltip />}</AnimatePresence>
       {!frameless && (
         <div className="absolute right-2 top-2 text-[10px] bg-black/60 backdrop-blur rounded-md px-2 py-1 border border-emerald-500/20 text-emerald-200 leading-tight">
           <div>Cars {cars.length}</div>
