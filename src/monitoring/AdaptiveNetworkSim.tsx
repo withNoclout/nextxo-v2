@@ -17,6 +17,9 @@ export interface NotificationEvent {
 interface AdaptiveNetworkSimProps {
   onNotify?: (e: NotificationEvent) => void
   desiredHeight?: number
+  frameless?: boolean
+  blendBackground?: boolean // when true, no panel chrome or grid backdrop
+  className?: string
 }
 
 // World & layout constants
@@ -155,7 +158,7 @@ function shortestPath(start: string, dest: string, graph: GraphIndex, edgePenalt
 function segmentLength(a: Node, b: Node) { return Math.hypot(a.x - b.x, a.y - b.y) }
 
 // Main Component
-export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: AdaptiveNetworkSimProps) {
+export default function AdaptiveNetworkSim({ onNotify, desiredHeight, frameless, blendBackground, className }: AdaptiveNetworkSimProps) {
   const nodes = useMemo(() => buildGridNodes(), [])
   const graph = useMemo(() => indexNodes(nodes), [nodes])
 
@@ -391,11 +394,13 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
     return rendered
   }
 
+  const outerClasses = frameless ? 'relative w-full h-full overflow-hidden' : 'relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black/50'
   return (
-    <div ref={panelRef} className="relative w-full h-full rounded-xl overflow-hidden border border-white/10 bg-black/50">
+    <div ref={panelRef} className={`${outerClasses} ${className||''}`}>
       <div style={{ width: WORLD_W, height: WORLD_H, transform: `scale(${scale})`, transformOrigin: 'top left', position: 'relative' }}>
-        {/* Background grid subtle */}
-        <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.07) 1px, transparent 1px),linear-gradient(90deg, rgba(16,185,129,0.07) 1px, transparent 1px)', backgroundSize: '38px 38px', opacity: 0.9 }} />
+        {!blendBackground && (
+          <div className="absolute inset-0" style={{ backgroundImage: 'linear-gradient(rgba(16,185,129,0.07) 1px, transparent 1px),linear-gradient(90deg, rgba(16,185,129,0.07) 1px, transparent 1px)', backgroundSize: '38px 38px', opacity: 0.9 }} />
+        )}
         {/* Links */}
         {renderLinks()}
         {/* Nodes */}
@@ -409,9 +414,11 @@ export default function AdaptiveNetworkSim({ onNotify, desiredHeight }: Adaptive
         {/* Cars */}
         {renderCars()}
       </div>
-      <div className="absolute right-2 top-2 text-[10px] bg-black/60 backdrop-blur rounded-md px-2 py-1 border border-emerald-500/20 text-emerald-200 leading-tight">
-        <div>Cars {cars.length}</div>
-      </div>
+      {!frameless && (
+        <div className="absolute right-2 top-2 text-[10px] bg-black/60 backdrop-blur rounded-md px-2 py-1 border border-emerald-500/20 text-emerald-200 leading-tight">
+          <div>Cars {cars.length}</div>
+        </div>
+      )}
     </div>
   )
 }
