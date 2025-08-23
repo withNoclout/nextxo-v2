@@ -2,16 +2,16 @@ import Layout from '../ui/Layout'
 import React from 'react'
 import ProductTabs from '../components/nav/ProductTabs'
 import CitySim from '../monitoring/CitySim'
+import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
 
 // Simple placeholder notifications data (could later be sourced dynamically)
-const demoNotifications = [
+const seedNotifications = [
   { id: 1, title: 'Signal Phase Shift Applied', detail: 'Adaptive cycle adjusted at 4 junctions', icon: '🔔', time: '2m ago' },
-  { id: 2, title: 'Pedestrian Surge Detected', detail: '+18% crossing volume north sector', icon: '🚶', time: '8m ago' },
-  { id: 3, title: 'Throughput Stable', detail: 'Avg car delay < 2.3s past 5 min', icon: '✅', time: '14m ago' },
-  { id: 4, title: 'Minor Congestion West', detail: 'Queue length +6 near W2', icon: '⚠️', time: '22m ago' },
 ]
 
-function NotificationsPanel(){
+interface UINote { id:number; title:string; detail:string; icon:string; time:string }
+
+function NotificationsPanel({ notes }:{ notes: UINote[] }){
   return (
     <div className="flex flex-col h-full">
       <div className="mb-4">
@@ -20,7 +20,7 @@ function NotificationsPanel(){
       </div>
       <div className="relative flex-1 min-h-0">
         <ul className="space-y-3 overflow-y-auto pr-1" style={{ maxHeight: '520px' }}>
-          {demoNotifications.map(n=> (
+          {notes.map(n=> (
             <li key={n.id} className="group flex items-center gap-3 rounded-lg bg-black/40 border border-white/10 px-3 py-2 hover:border-emerald-500/30 transition-colors" style={{ height: 60 }}>
               <div className="text-xl leading-none select-none" aria-hidden>{n.icon}</div>
               <div className="flex-1 min-w-0">
@@ -46,6 +46,16 @@ function DashboardShell({ children }: { children: React.ReactNode }){
 }
 
 export default function MonitoringPage() {
+  const [notes,setNotes] = React.useState<UINote[]>(seedNotifications)
+  const pushNotification = React.useCallback((e:NotificationEvent)=>{
+    // Map event types to icon & formatting
+    const icon = e.message.startsWith('🔴') ? '🔴' : e.message.startsWith('⚠️') ? '⚠️' : e.message.startsWith('🟢') ? '🟢' : '🔔'
+    const clean = e.message.replace(/^([🟢🔴⚠️])\s*/,'')
+    setNotes(prev=>[
+      { id:e.id, title: clean.split(':')[0]?.slice(0,70) || 'Update', detail: clean.split(':').slice(1).join(':').trim().slice(0,80) || clean, icon, time: 'now' },
+      ...prev.slice(0,30)
+    ])
+  },[])
   return (
     <Layout>
       {/* Secondary product navigation */}
@@ -58,15 +68,15 @@ export default function MonitoringPage() {
           </header>
           <div className="cm-grid-stack grid gap-[60px]" style={{ gridTemplateColumns: '360px 1fr' }}>
             <div className="rounded-xl border border-white/10 bg-black/40 p-4" style={{ width: 360 }}>
-              <NotificationsPanel />
+              <NotificationsPanel notes={notes} />
             </div>
             <div className="rounded-xl border border-white/10 bg-black/40 p-6 flex flex-col" style={{ minHeight: 560 }}>
               <div className="mb-4">
-                <h2 className="text-[15px] font-semibold tracking-tight mb-1">Network Grid</h2>
-                <p className="text-[11px] text-white/60 leading-snug">4×4 intersection cluster • adaptive phase cycle demo</p>
+                <h2 className="text-[15px] font-semibold tracking-tight mb-1">Adaptive Network Grid</h2>
+                <p className="text-[11px] text-white/60 leading-snug">Real-time routing • congestion-driven re-pathing</p>
               </div>
               <div className="flex-1 min-h-0">
-                <CitySim desiredHeight={550} />
+                <AdaptiveNetworkSim desiredHeight={550} onNotify={pushNotification} />
               </div>
             </div>
           </div>
