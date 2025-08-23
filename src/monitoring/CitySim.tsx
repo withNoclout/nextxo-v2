@@ -91,6 +91,32 @@ export default function CitySim(){
           {/* roads */}
           {grid.ys.map(y=> <div key={`h-${y}`} className="absolute left-0 right-0 bg-slate-900" style={{ top: y-ROAD_W/2, height: ROAD_W }} />)}
           {grid.xs.map(x=> <div key={`v-${x}`} className="absolute top-0 bottom-0 bg-slate-900" style={{ left: x-ROAD_W/2, width: ROAD_W }} />)}
+          {/* building blocks (between roads) */}
+          {(() => {
+            const els: React.ReactNode[] = []
+            // horizontal bands between roads
+            const yBands: Array<{ top:number; bottom:number }> = []
+            for (let j=0;j<=grid.ys.length;j++) {
+              const prev = j===0 ? 0 : grid.ys[j-1]+ROAD_W/2
+              const next = j===grid.ys.length ? SIZE : grid.ys[j]-ROAD_W/2
+              if (next - prev > 24) yBands.push({ top: prev, bottom: next })
+            }
+            const xBands: Array<{ left:number; right:number }> = []
+            for (let i=0;i<=grid.xs.length;i++) {
+              const prev = i===0 ? 0 : grid.xs[i-1]+ROAD_W/2
+              const next = i===grid.xs.length ? SIZE : grid.xs[i]-ROAD_W/2
+              if (next - prev > 24) xBands.push({ left: prev, right: next })
+            }
+            xBands.forEach((xb,i) => yBands.forEach((yb,j) => {
+              // Skip if touches a road directly (we already filtered by >24 width/height) – just render
+              const pad = 8
+              els.push(
+                <div key={`blk-${i}-${j}`} className="absolute bg-zinc-900/80 border border-emerald-500/10"
+                  style={{ left: xb.left+pad, top: yb.top+pad, width: Math.max(0, (xb.right - xb.left) - pad*2), height: Math.max(0, (yb.bottom - yb.top) - pad*2) }} />
+              )
+            }))
+            return els
+          })()}
           {/* intersection + crosswalks + lights */}
           {grid.xs.map(x=> grid.ys.map(y=> <React.Fragment key={`j-${x}-${y}`}>
             <div className="absolute border border-emerald-500/20" style={{ left:x-ROAD_W/2, top:y-ROAD_W/2, width:ROAD_W, height:ROAD_W, boxShadow:'0 0 0 1px rgba(16,185,129,0.08) inset' }} />
@@ -108,6 +134,10 @@ export default function CitySim(){
           <div className="absolute right-3 top-3 text-xs bg-black/50 backdrop-blur rounded-lg px-3 py-2 border border-emerald-500/20 text-emerald-200">
             <div className="flex items-center gap-2"><span className="inline-block w-2 h-2 rounded-full bg-emerald-400" /> <span>NS: {nsPhase.toUpperCase()}</span></div>
             <div className="flex items-center gap-2 mt-1"><span className="inline-block w-2 h-2 rounded-full bg-cyan-400" /> <span>EW: {ewPhase.toUpperCase()}</span></div>
+            <div className="mt-1 flex flex-col gap-px opacity-80">
+              <span>Ped NS: {pedPhase('NS', nsPhase, ewPhase) === 'walk' ? 'WALK' : 'WAIT'}</span>
+              <span>Ped EW: {pedPhase('EW', nsPhase, ewPhase) === 'walk' ? 'WALK' : 'WAIT'}</span>
+            </div>
             <div className="opacity-70 mt-1">Cars: {cars.length} · Peds: {peds.length}</div>
           </div>
         </div>
