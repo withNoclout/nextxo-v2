@@ -1,5 +1,5 @@
 import Layout from '../ui/Layout'
-import React from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import ProductTabs from '../components/nav/ProductTabs'
 import CitySim from '../monitoring/CitySim'
 import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
@@ -17,34 +17,73 @@ interface UINote {
   category: 'critical'|'major'|'routine'
   time:string
   count?:number
+  pinUntil?: number
 }
 
-function NotificationsPanel({ notes }:{ notes: UINote[] }){
+function NotificationsPanel({ pinnedCritical, regularFeed, onDismiss, tickerPaused, onMouseEnter, onMouseLeave }:{
+  pinnedCritical: UINote[];
+  regularFeed: UINote[];
+  onDismiss: (id:number)=>void;
+  tickerPaused: boolean;
+  onMouseEnter: ()=>void;
+  onMouseLeave: ()=>void;
+}){
+  const listRef = useRef<HTMLUListElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  // Fade mask CSS is always present
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden" style={{ paddingTop:12, paddingBottom:12 }}>
+    <div className="w-full flex flex-col h-full overflow-hidden notifications-viewport" style={{ paddingTop:12, paddingBottom:12, position:'relative', maskImage:'linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)', WebkitMaskImage:'linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)' }}
+      onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}
+    >
       <div className="mb-3 px-1 shrink-0">
         <h2 className="text-[15px] font-semibold tracking-tight mb-1">Recent Notifications</h2>
-        <p className="text-[11px] text-white/60 leading-snug">Critical events ungrouped • others grouped.</p>
+        <p className="text-[11px] text-white/60 leading-snug">Critical events pinned • ticker below.</p>
       </div>
-      <ul className="space-y-2 px-1 overflow-y-auto pr-1" style={{ scrollbarWidth:'thin' }}>
-        {notes.map(n=> {
-          const border = n.category==='critical'
-            ? 'border-red-500/70 shadow-[0_0_6px_1px_rgba(239,68,68,0.45)] border-2'
-            : n.category==='major'
-              ? 'border-yellow-400/40 border'
-              : 'border-white/10 border'
-          const full = n.detail ? `${n.title}: ${n.detail}` : n.title
-          const line = (n.count && n.count>1) ? `${full} (x${n.count})` : full
-          return (
-            <li key={n.id} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease]`}>
-              <div className="flex-1 min-w-0 pr-2">
-                <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{line}</p>
-              </div>
-              <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
-            </li>
-          )
-        })}
-      </ul>
+      {/* Pinned critical block */}
+      {pinnedCritical.length > 0 && (
+        <ul className="space-y-2 px-1 mb-2">
+          {pinnedCritical.slice(0,3).map((n,i) => {
+            const border = 'border-red-500/70 shadow-[0_0_6px_1px_rgba(239,68,68,0.45)] border-2'
+            const full = n.detail ? `${n.title}: ${n.detail}` : n.title
+            return (
+              <li key={n.id} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease] relative`}>
+                <div className="flex-1 min-w-0 pr-2">
+                  <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{full}</p>
+                </div>
+                <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
+                <button className="absolute top-1 right-1 text-[13px] text-white/60 hover:text-white/90 px-1 py-0.5 rounded focus:outline-none" title="Dismiss" onClick={()=>onDismiss(n.id)}>&times;</button>
+              </li>
+            )
+          })}
+          {pinnedCritical.length > 3 && (
+            <li className="flex items-center justify-center text-[11px] text-red-300/80 mt-1">+{pinnedCritical.length-3} more critical</li>
+          )}
+        </ul>
+      )}
+      {/* Ticker for regular feed */}
+      <div className="relative flex-1 min-h-0" style={{overflow:'hidden'}}>
+        <div ref={trackRef} style={{transition:'none'}}>
+          <ul ref={listRef} className="space-y-2 px-1 select-none">
+            {regularFeed.map((n,i) => {
+              const border = n.category==='major'
+                ? 'border-yellow-400/40 border'
+                : 'border-white/10 border'
+              const full = n.detail ? `${n.title}: ${n.detail}` : n.title
+              const line = (n.count && n.count>1) ? `${full} (x${n.count})` : full
+              return (
+                <li key={n.id+':'+(n.time||i)} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease]`}>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{line}</p>
+                  </div>
+                  <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+        {/* Fallback fade overlay for browsers without mask support */}
+        <div style={{position:'absolute',left:0,right:0,bottom:0,height:36,pointerEvents:'none',background:'linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,0.85) 90%)'}} />
+      </div>
     </div>
   )
 }
@@ -59,7 +98,18 @@ function DashboardShell({ children }: { children: React.ReactNode }){
 }
 
 export default function MonitoringPage() {
-  const [notes,setNotes] = React.useState<UINote[]>(() => seedNotifications.map(n=> ({...n, severity:'normal', category:'routine', count:1 })))
+  // --- Notification state ---
+  const PIN_SECONDS = 10
+  const [pinnedCritical, setPinnedCritical] = useState<UINote[]>([])
+  const [regularFeed, setRegularFeed] = useState<UINote[]>([])
+  const seen = useRef<Set<number>>(new Set())
+  // Ticker state
+  const [tickerPaused, setTickerPaused] = useState(false)
+  const tickerOffset = useRef(0)
+  const tickerRaf = useRef<number>()
+  const tickerListRef = useRef<HTMLUListElement>(null)
+  const tickerTrackRef = useRef<HTMLDivElement>(null)
+  // Ingest logic
   const pushNotification = React.useCallback((e:NotificationEvent)=>{
     const raw = e.message.replace(/^([\u{1F534}🔴⚠️🟢])\s*/u,'').trim()
     const lower = raw.toLowerCase()
@@ -75,21 +125,86 @@ export default function MonitoringPage() {
     // Filtering: optionally ignore low-value clears/green adoption unless critical
     if (/high ev adoption|traffic cleared|temporary relief/i.test(lower)) return
     if (e.type==='clear' && category!=='critical') return
-    setNotes(prev => {
-      if (category==='critical') {
-        // Always append (no grouping)
-        return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,49) ]
-      }
-      // Group by title+detail+category signature
-      const keyIdx = prev.findIndex(n => n.category===category && n.title===title && n.detail===detail)
-      if (keyIdx !== -1) {
-        const copy=[...prev]
-        const ex=copy[keyIdx]
-        copy[keyIdx] = { ...ex, time:'now', count:(ex.count||1)+1 }
-        return copy
-      }
-      return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,49) ]
+    if (seen.current.has(e.id)) return
+    seen.current.add(e.id)
+    if (category==='critical') {
+      setPinnedCritical(prev => [
+        { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1, pinUntil: Date.now() + PIN_SECONDS*1000 },
+        ...prev.filter(n=>n.id!==e.id)
+      ])
+    } else {
+      setRegularFeed(prev => {
+        // Group by title+detail+category signature
+        const keyIdx = prev.findIndex(n => n.category===category && n.title===title && n.detail===detail)
+        if (keyIdx !== -1) {
+          const copy=[...prev]
+          const ex=copy[keyIdx]
+          copy[keyIdx] = { ...ex, time:'now', count:(ex.count||1)+1 }
+          return copy
+        }
+        return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,99) ]
+      })
+    }
+  },[])
+  // Pin expiry GC
+  useEffect(()=>{
+    const interval = setInterval(()=>{
+      setPinnedCritical(prev => {
+        const now = Date.now()
+        const keep:UINote[] = []
+        const expired:UINote[] = []
+        for (const ev of prev) {
+          if (ev.pinUntil && now <= ev.pinUntil) keep.push(ev)
+          else expired.push({...ev, pinUntil: undefined})
+        }
+        if (expired.length) setRegularFeed(rf => [...expired, ...rf])
+        return keep
+      })
+    }, 1000)
+    return ()=>clearInterval(interval)
+  },[])
+  // Manual dismiss
+  const handleDismiss = (id:number) => {
+    setPinnedCritical(prev => {
+      const idx = prev.findIndex(n=>n.id===id)
+      if (idx===-1) return prev
+      const [removed] = prev.splice(idx,1)
+      setRegularFeed(rf => [{...removed, pinUntil:undefined}, ...rf])
+      return [...prev]
     })
+  }
+  // --- Ticker logic ---
+  useEffect(()=>{
+    let raf:number; let last=performance.now()
+    function step(now:number){
+      if (tickerPaused) { raf=requestAnimationFrame(step); return }
+      const dt = (now-last)/1000; last=now
+      const SPEED = 28 // px/sec
+      tickerOffset.current += SPEED*dt
+      const list = tickerListRef.current
+      const track = tickerTrackRef.current
+      if (list && track) {
+        const rowH = list.firstElementChild?.clientHeight||0
+        if (rowH && tickerOffset.current >= rowH) {
+          tickerOffset.current -= rowH
+          setRegularFeed(prev => {
+            if (prev.length<2) return prev
+            const first = prev[0];
+            return [...prev.slice(1), first]
+          })
+        }
+        track.style.transform = `translateY(${-tickerOffset.current}px)`
+      }
+      raf=requestAnimationFrame(step)
+    }
+    raf=requestAnimationFrame(step)
+    return ()=>cancelAnimationFrame(raf)
+  },[tickerPaused])
+  // Pause on hover or tab hidden
+  useEffect(()=>{
+    function onVis(){ setTickerPaused(document.hidden) }
+    document.addEventListener('visibilitychange', onVis)
+    return ()=>document.removeEventListener('visibilitychange', onVis)
   },[])
   return (
     <Layout>
@@ -103,15 +218,22 @@ export default function MonitoringPage() {
           </header>
           <div className="cm-grid-stack grid gap-[60px]" style={{ gridTemplateColumns: '360px 1fr' }}>
             <div className="rounded-xl border border-white/10 bg-black/40 px-5 py-3 self-start" style={{ width: 360, height:650 }}>
-              <NotificationsPanel notes={notes} />
+              <NotificationsPanel
+                pinnedCritical={pinnedCritical}
+                regularFeed={regularFeed}
+                onDismiss={handleDismiss}
+                tickerPaused={tickerPaused}
+                onMouseEnter={()=>setTickerPaused(true)}
+                onMouseLeave={()=>setTickerPaused(false)}
+              />
             </div>
-      <div className="p-0 flex flex-col" style={{ width:1000, height:600 }}>
+            <div className="p-0 flex flex-col" style={{ width:1000, height:600 }}>
               <div className="mb-4">
-        <h2 className="text-[15px] font-semibold tracking-tight mb-1">Adaptive Network Grid</h2>
-        <p className="text-[12px] text-white/60 leading-snug">Real-time routing • congestion-driven re-pathing</p>
+                <h2 className="text-[15px] font-semibold tracking-tight mb-1">Adaptive Network Grid</h2>
+                <p className="text-[12px] text-white/60 leading-snug">Real-time routing • congestion-driven re-pathing</p>
               </div>
               <div className="flex-1 min-h-0">
-        <AdaptiveNetworkSim desiredHeight={600-60} onNotify={pushNotification} frameless blendBackground className="-m-2 text-[12px]" />
+                <AdaptiveNetworkSim desiredHeight={600-60} onNotify={pushNotification} frameless blendBackground className="-m-2 text-[12px]" />
               </div>
             </div>
           </div>
