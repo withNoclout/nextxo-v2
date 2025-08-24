@@ -12,13 +12,12 @@ export type Feedback = {
 
 interface CommunityFeedbackRowProps {
   initial?: Feedback[]
-  width?: number
-  height?: number
   gap?: number
   cardW?: number
   cardH?: number
   maxItems?: number
   animationMs?: number
+  embedded?: boolean // when true, omit header & outer margins
 }
 
 // Utility format time relative (simple Thai stub)
@@ -30,13 +29,12 @@ const DEFAULT_SEED: Feedback[] = []
 
 export default function CommunityFeedbackRow({
   initial = DEFAULT_SEED,
-  width = 1360,
-  height = 280,
   gap = 20,
   cardW = 340,
   cardH = 260,
   maxItems = 200,
   animationMs = 260,
+  embedded = false,
 }: CommunityFeedbackRowProps){
   const [items, setItems] = useState<Feedback[]>(() => [...initial])
   // Queue for incoming items during animation or when user scrolled away
@@ -150,24 +148,22 @@ export default function CommunityFeedbackRow({
   }
 
   return (
-    <div className="mx-auto mt-12" style={{ maxWidth:width, width:'100%' }}>
-      <div className="flex items-center justify-between mb-3 px-1">
-        <h3 className="text-[15px] font-semibold tracking-tight">Community Feedback</h3>
-        <div className="text-[11px] text-white/50">Realtime complaints (Thai)</div>
-      </div>
-      <div ref={viewportRef} className="fb-viewport relative" style={{ width:'100%', height, overflow:'hidden', position:'relative', WebkitMaskImage:'linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,1) 40px, rgba(0,0,0,1) calc(100% - 40px), rgba(0,0,0,0) 100%)', maskImage:'linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,1) 40px, rgba(0,0,0,1) calc(100% - 40px), rgba(0,0,0,0) 100%)' }} aria-live="polite">
-        <div className="absolute inset-0 overflow-x-auto overflow-y-hidden" style={{scrollbarWidth:'none'}} ref={el=>{ if (el) el.style.setProperty('scroll-behavior','smooth') }}>
-          <div ref={trackRef} className="flex" style={{ gap, paddingLeft:0, paddingRight:0 }}>
-            {items.map(card)}
-          </div>
+    <div className={`relative w-full ${embedded ? '' : 'mt-12'}`}>
+      {!embedded && (
+        <div className="flex items-center justify-between mb-3 px-1">
+          <h3 className="text-[15px] font-semibold tracking-tight">Community Feedback</h3>
+          <div className="text-[11px] text-white/50">Realtime complaints (Thai)</div>
         </div>
-        {/* Pending pill */}
+      )}
+      <div ref={viewportRef} className="fb-viewport relative overflow-x-auto overflow-y-hidden snap-x snap-mandatory" style={{WebkitMaskImage:'linear-gradient(90deg, #0000 0, #000 40px, #000 calc(100% - 40px), #0000 100%)', maskImage:'linear-gradient(90deg, #0000 0, #000 40px, #000 calc(100% - 40px), #0000 100%)'}} aria-live="polite">
+        <div ref={trackRef} className="flex" style={{ gap }}>
+          {items.map(card)}
+        </div>
         {pendingCount>0 && userAwayRef.current && (
           <button onClick={showPending} className="absolute top-2 left-3 z-10 text-[11px] bg-emerald-600/80 hover:bg-emerald-600 text-white px-3 py-1 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-emerald-400/70">
             +{pendingCount} new
           </button>
         )}
-        {/* Fallback edge gradients for non-mask browsers */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-[70px]" style={{background:'linear-gradient(90deg, rgba(0,0,0,0.9), rgba(0,0,0,0))'}} />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-[70px]" style={{background:'linear-gradient(270deg, rgba(0,0,0,0.9), rgba(0,0,0,0))'}} />
       </div>

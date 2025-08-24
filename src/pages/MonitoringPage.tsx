@@ -54,16 +54,15 @@ function severityBorder(g:Group){
 const cardAnimClass = 'transition-[opacity,transform] duration-200 ease-out';
 
 function NotificationsPanel({ groups, onToggle, onDismissPin, scrolling, viewportRef, virtualization }:NotificationsPanelProps){
-  // Render groups (apply virtualization window if present)
   const slice = virtualization ? groups.slice(virtualization.start, virtualization.end) : groups;
   return (
-    <div className="w-full flex flex-col h-full" style={{paddingTop:12,paddingBottom:12}}>
-      <div className="mb-3 px-1 shrink-0">
+    <section className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-6 w-full flex flex-col h-full relative overflow-hidden">
+      <header className="mb-4">
         <h2 className="text-[15px] font-semibold tracking-tight mb-1">Recent Notifications</h2>
         <p className="text-[12px] text-white/55 leading-snug">Critical events are pinned. Related alerts auto-stack. Scroll to see history.</p>
-      </div>
-      <div ref={viewportRef} className="flex-1 min-h-0 notifications-viewport relative" aria-live="polite" style={{scrollbarWidth:'thin'}}>
-        <ul className="space-y-2 px-1 pb-2">
+      </header>
+      <div ref={viewportRef} className="notif-viewport flex-1 min-h-0" aria-live="polite" style={{scrollbarWidth:'thin'}}>
+        <ul className="space-y-2 pb-2">
           {slice.map(g => {
             const border = severityBorder(g)
             const isPinned = g.highest==='critical' && g.pinUntil && Date.now() <= g.pinUntil
@@ -119,10 +118,8 @@ function NotificationsPanel({ groups, onToggle, onDismissPin, scrolling, viewpor
             )
           })}
         </ul>
-        {/* gradient mask via CSS class; extra overlay for safety */}
-        <div className="pointer-events-none absolute inset-0" style={{WebkitMaskImage:'linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%)',maskImage:'linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%)'}} />
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -297,20 +294,44 @@ export default function MonitoringPage() {
       <ProductTabs />
       <section className="relative min-h-[70vh] bg-transparent px-6 pt-8" aria-labelledby="monitoring-heading">
         <DashboardShell>
+          <style>{`.notif-viewport{overflow-y:auto;overscroll-behavior:contain;position:relative;-webkit-mask-image:linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%);mask-image:linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%);} .fb-viewport::-webkit-scrollbar{display:none;} .fb-viewport{scrollbar-width:none;}`}</style>
           <header className="mb-8">
             <h1 id="monitoring-heading" className="text-3xl font-semibold tracking-tight mb-3">Carbon Monitoring</h1>
             <p className="text-white/70 max-w-2xl text-sm leading-relaxed">Real‑time urban flow model: signal phases, vehicles & pedestrian activity visualization.</p>
           </header>
           <div className="cm-grid-stack grid gap-[60px]" style={{ gridTemplateColumns: '360px 1fr' }}>
-            <div className="rounded-xl border border-white/10 bg-black/40 px-5 py-3 self-start" style={{ width: 360, height:650 }}>
+            <div className="flex flex-col" style={{ width:360 }}>
               <NotificationsPanel
-                groups={ordered}
-                onToggle={toggleGroup}
-                onDismissPin={dismissPin}
-                scrolling={scrolling}
-                viewportRef={scrollContainerRef}
-                virtualization={virtualization}
+                  groups={ordered}
+                  onToggle={toggleGroup}
+                  onDismissPin={dismissPin}
+                  scrolling={scrolling}
+                  viewportRef={scrollContainerRef}
+                  virtualization={virtualization}
               />
+              <div className="h-[100px]" />
+              <section className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-6 w-full relative overflow-hidden">
+                <header className="mb-4">
+                  <h2 className="text-[15px] font-semibold tracking-tight mb-1">Community Feedback</h2>
+                  <p className="text-[12px] text-white/55 leading-snug">Realtime complaints (Thai) from departments.</p>
+                </header>
+                <div className="relative">
+                  <CommunityFeedbackRow embedded initial={[
+                      {"id":"fb-001","bold":"รถบรรทุกจอดคาปากแยก","text":" นานเกินไป ทำให้ช่องทาง Analytics ติดขัดหนัก ช่วยจัดการที","user":"anonymous-user1","dept":"Analytics","ts":1735039200000,"severity":"critical"},
+                      {"id":"fb-002","bold":"คาร์บอนของฝ่าย Compliance พุ่งขึ้นอย่างผิดปกติ","text":" เมื่อเทียบกับเมื่อวาน เกิดอะไรขึ้นครับ","user":"anonymous-user2","dept":"Compliance","ts":1735039260000},
+                      {"id":"fb-003","bold":"มีรถบรรทุกจอดซ้อนเลน","text":" หน้าฝ่าย Operations ทำให้รถสวนกันไม่ได้","user":"anonymous-user3","dept":"Operations","ts":1735039320000},
+                      {"id":"fb-004","bold":"การปล่อย CO₂ ฝ่าย Supply Chain เพิ่มขึ้น 35%","text":" ภายใน 1 ชั่วโมงที่ผ่านมา ตรวจสอบด่วน","user":"anonymous-user4","dept":"Supply Chain","ts":1735039380000,"severity":"warning"},
+                      {"id":"fb-005","bold":"รถส่งของขวางช่องทาง Customer Service","text":" ติดยาวหลายบล็อกแล้ว","user":"anonymous-user5","dept":"Customer Service","ts":1735039440000},
+                      {"id":"fb-006","bold":"ค่าคาร์บอนของ R&D กระโดดขึ้นทันที","text":" หลังรอบเปลี่ยนกะ มีการทดสอบเครื่องจักรหรือไม่","user":"anonymous-user6","dept":"R&D","ts":1735039500000},
+                      {"id":"fb-007","bold":"รถบรรทุกจอดกินเลน","text":" แถว Finance ทำให้รถเลี้ยวไม่ได้","user":"anonymous-user7","dept":"Finance","ts":1735039560000},
+                      {"id":"fb-008","bold":"ค่าการปล่อยของฝ่าย IT สูงผิดปกติ","text":" ตั้งแต่ช่วงเช้า ใครเปิดเครื่องเยอะไปหรือเปล่า","user":"anonymous-user8","dept":"IT","ts":1735039620000},
+                      {"id":"fb-009","bold":"รถยกขึ้นของหลุด","text":" ทำให้ทางเข้า Procurement ตัน ช่วยเคลียร์ด่วน","user":"anonymous-user9","dept":"Procurement","ts":1735039680000,"severity":"critical"},
+                      {"id":"fb-010","bold":"การปล่อย CO₂ ฝ่าย Legal เพิ่มแบบพรวดพราด","text":" เกิดจากระบบระบายอากาศเสียหรือไม่","user":"anonymous-user10","dept":"Legal","ts":1735039740000},
+                      {"id":"fb-011","bold":"รถบรรทุกจอดรอเอกสาร","text":" ขวางหน้าฝ่าย Security เป็นชั่วโมงแล้ว","user":"anonymous-user11","dept":"Security","ts":1735039800000},
+                      {"id":"fb-012","bold":"ฝั่ง Training ควันดำขึ้นชัดเจน","text":" ควรตรวจเครื่องปั่นไฟด่วน","user":"anonymous-user12","dept":"Training","ts":1735039860000,"severity":"warning"}
+                  ]} />
+                </div>
+              </section>
             </div>
             <div className="p-0 flex flex-col" style={{ width:1000, height:600 }}>
               <div className="mb-4">
@@ -322,23 +343,7 @@ export default function MonitoringPage() {
               </div>
             </div>
           </div>
-          {/* Community Feedback Row */}
-          <CommunityFeedbackRow
-            initial={[
-              {"id":"fb-001","bold":"รถบรรทุกจอดคาปากแยก","text":" นานเกินไป ทำให้ช่องทาง Analytics ติดขัดหนัก ช่วยจัดการที","user":"anonymous-user1","dept":"Analytics","ts":1735039200000,"severity":"critical"},
-              {"id":"fb-002","bold":"คาร์บอนของฝ่าย Compliance พุ่งขึ้นอย่างผิดปกติ","text":" เมื่อเทียบกับเมื่อวาน เกิดอะไรขึ้นครับ","user":"anonymous-user2","dept":"Compliance","ts":1735039260000},
-              {"id":"fb-003","bold":"มีรถบรรทุกจอดซ้อนเลน","text":" หน้าฝ่าย Operations ทำให้รถสวนกันไม่ได้","user":"anonymous-user3","dept":"Operations","ts":1735039320000},
-              {"id":"fb-004","bold":"การปล่อย CO₂ ฝ่าย Supply Chain เพิ่มขึ้น 35%","text":" ภายใน 1 ชั่วโมงที่ผ่านมา ตรวจสอบด่วน","user":"anonymous-user4","dept":"Supply Chain","ts":1735039380000,"severity":"warning"},
-              {"id":"fb-005","bold":"รถส่งของขวางช่องทาง Customer Service","text":" ติดยาวหลายบล็อกแล้ว","user":"anonymous-user5","dept":"Customer Service","ts":1735039440000},
-              {"id":"fb-006","bold":"ค่าคาร์บอนของ R&D กระโดดขึ้นทันที","text":" หลังรอบเปลี่ยนกะ มีการทดสอบเครื่องจักรหรือไม่","user":"anonymous-user6","dept":"R&D","ts":1735039500000},
-              {"id":"fb-007","bold":"รถบรรทุกจอดกินเลน","text":" แถว Finance ทำให้รถเลี้ยวไม่ได้","user":"anonymous-user7","dept":"Finance","ts":1735039560000},
-              {"id":"fb-008","bold":"ค่าการปล่อยของฝ่าย IT สูงผิดปกติ","text":" ตั้งแต่ช่วงเช้า ใครเปิดเครื่องเยอะไปหรือเปล่า","user":"anonymous-user8","dept":"IT","ts":1735039620000},
-              {"id":"fb-009","bold":"รถยกขึ้นของหลุด","text":" ทำให้ทางเข้า Procurement ตัน ช่วยเคลียร์ด่วน","user":"anonymous-user9","dept":"Procurement","ts":1735039680000,"severity":"critical"},
-              {"id":"fb-010","bold":"การปล่อย CO₂ ฝ่าย Legal เพิ่มแบบพรวดพราด","text":" เกิดจากระบบระบายอากาศเสียหรือไม่","user":"anonymous-user10","dept":"Legal","ts":1735039740000},
-              {"id":"fb-011","bold":"รถบรรทุกจอดรอเอกสาร","text":" ขวางหน้าฝ่าย Security เป็นชั่วโมงแล้ว","user":"anonymous-user11","dept":"Security","ts":1735039800000},
-              {"id":"fb-012","bold":"ฝั่ง Training ควันดำขึ้นชัดเจน","text":" ควรตรวจเครื่องปั่นไฟด่วน","user":"anonymous-user12","dept":"Training","ts":1735039860000,"severity":"warning"}
-            ]}
-          />
+          {/* Community Feedback moved inside notifications panel */}
         </DashboardShell>
       </section>
     </Layout>
