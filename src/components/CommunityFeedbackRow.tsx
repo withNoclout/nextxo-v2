@@ -14,11 +14,11 @@ interface CommunityFeedbackRowProps {
   initial?: Feedback[]
   width?: number
   height?: number
-  speedPxPerSec?: number
   gap?: number
   cardW?: number
   cardH?: number
   maxItems?: number
+  animationMs?: number
 }
 
 // Utility format time relative (simple Thai stub)
@@ -32,101 +32,108 @@ export default function CommunityFeedbackRow({
   initial = DEFAULT_SEED,
   width = 1360,
   height = 280,
-  speedPxPerSec = 28,
   gap = 20,
   cardW = 340,
   cardH = 260,
   maxItems = 200,
+  animationMs = 260,
 }: CommunityFeedbackRowProps){
   const [items, setItems] = useState<Feedback[]>(() => [...initial])
-  const [paused,setPaused] = useState(false)
-  const [lastInteract,setLastInteract] = useState<number>(0)
-  const shiftRef = useRef(0) // positive shift pushes cards visually to the right
+  // Queue for incoming items during animation or when user scrolled away
+  const queueRef = useRef<Feedback[]>([])
+  const isAnimatingRef = useRef(false)
+  const viewportRef = useRef<HTMLDivElement|null>(null)
   const trackRef = useRef<HTMLDivElement|null>(null)
-  const rafRef = useRef<number>()
-  const fadeOutIdRef = useRef<string | null>(null)
-  const idleResumeMs = 3000
+  const userAwayRef = useRef(false)
+  const [pendingCount,setPendingCount] = useState(0)
+  const FULL_W = cardW + gap
 
-  // Auto resume after idle
-  useEffect(()=>{
-    if (!paused) return
-    const t = setTimeout(()=>{
-      if (Date.now() - lastInteract >= idleResumeMs) setPaused(false)
-    }, idleResumeMs+50)
-    return ()=> clearTimeout(t)
-  },[paused,lastInteract])
+  function atLeftEdge(){
+    const vp = viewportRef.current
+    if (!vp) return true
+    return vp.scrollLeft < 6 // near left
+  }
 
-  // Autoplay frame loop
+  // Observe scroll to set userAway
   useEffect(()=>{
-    let last = performance.now()
-    function frame(now:number){
-      const dt = (now - last)/1000; last = now
-      if (!paused && items.length){
-        shiftRef.current += speedPxPerSec * dt
-        const w = cardW + gap
-        if (shiftRef.current >= w){
-          // mark the rightmost card for fade OUT just before cycling? Actually we cycle the last card -> front
-          shiftRef.current -= w
-          setItems(prev => {
-            if (prev.length<2) return prev
-            const lastItem = prev[prev.length-1]
-            const rest = prev.slice(0, prev.length-1)
-            return [lastItem, ...rest]
-          })
-        }
-        if (trackRef.current){
-          trackRef.current.style.transform = `translateX(${shiftRef.current}px)`
+    const el = viewportRef.current
+    if (!el) return
+    function onScroll(){
+      const away = !atLeftEdge()
+      userAwayRef.current = away
+      if (!away) {
+        // If returned to left, process queued
+        if (!isAnimatingRef.current) processNext()
+      }
+    }
+    el.addEventListener('scroll', onScroll, { passive:true })
+    return ()=> el.removeEventListener('scroll', onScroll)
+  },[])
+
+  // FLIP slide-in executor
+  const slideIn = (done:()=>void) => {
+    const track = trackRef.current
+    if (!track) { done(); return }
+    // Pre-position
+    track.style.transition = 'none'
+    track.style.transform = `translateX(-${FULL_W}px)`
+    // Force reflow
+    track.getBoundingClientRect()
+    requestAnimationFrame(()=>{
+      track.style.transition = `transform ${animationMs}ms cubic-bezier(.22,.61,.36,1)`
+      track.style.transform = 'translateX(0)'
+      const handler = (e:TransitionEvent) => {
+        if (e.propertyName === 'transform') {
+          track.style.transition = 'none'
+          track.removeEventListener('transitionend', handler)
+          done()
         }
       }
-      rafRef.current = requestAnimationFrame(frame)
-    }
-    rafRef.current = requestAnimationFrame(frame)
-    return ()=> { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
-  },[paused, items.length, speedPxPerSec, gap, cardW])
-
-  // Manual wheel scroll (horizontal) & pause
-  const viewportRef = useRef<HTMLDivElement|null>(null)
-  useEffect(()=>{
-    function onWheel(e:WheelEvent){
-      if (!viewportRef.current) return
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)){
-        // horizontal intent
-        shiftRef.current += e.deltaX * 0.6
-      } else if (e.deltaY){
-        shiftRef.current += e.deltaY * 0.6
-      } else return
-      if (trackRef.current) trackRef.current.style.transform = `translateX(${shiftRef.current}px)`
-      setPaused(true); setLastInteract(Date.now())
-      e.preventDefault()
-    }
-    const el = viewportRef.current
-    if (el) el.addEventListener('wheel', onWheel, { passive:false })
-    return ()=> { if (el) el.removeEventListener('wheel', onWheel) }
-  },[])
-
-  // Pointer drag
-  useEffect(()=>{
-    let dragging = false; let startX = 0; let startShift = 0
-    function down(e:PointerEvent){ dragging=true; startX=e.clientX; startShift=shiftRef.current; setPaused(true); setLastInteract(Date.now()) }
-    function move(e:PointerEvent){ if(!dragging) return; const dx = e.clientX - startX; shiftRef.current = startShift + dx; if(trackRef.current) trackRef.current.style.transform = `translateX(${shiftRef.current}px)` }
-    function up(){ if(dragging){ dragging=false; setLastInteract(Date.now()) } }
-    const el = viewportRef.current
-    if (el){ el.addEventListener('pointerdown',down); window.addEventListener('pointermove',move); window.addEventListener('pointerup',up); }
-    return ()=>{ if (el){ el.removeEventListener('pointerdown',down) }; window.removeEventListener('pointermove',move); window.removeEventListener('pointerup',up) }
-  },[])
-
-  // Public ingest function (placeholder hook usage) could be exposed via ref later
-  const ingest = useCallback((fb:Feedback)=>{
-    setItems(prev => {
-      const next = [fb, ...prev]
-      if (next.length > maxItems) next.pop()
-      return next
+      track.addEventListener('transitionend', handler)
     })
-    setPaused(true); setLastInteract(Date.now())
-  },[maxItems])
+  }
+
+  const processNext = () => {
+    if (isAnimatingRef.current) return
+    if (userAwayRef.current) { setPendingCount(queueRef.current.length); return }
+    const next = queueRef.current.shift()
+    setPendingCount(queueRef.current.length)
+    if (!next) return
+    isAnimatingRef.current = true
+    setItems(prev => {
+      const updated = [next, ...prev]
+      return updated.slice(0, maxItems)
+    })
+    // Wait a frame so new DOM node present then animate
+    requestAnimationFrame(()=>{
+      slideIn(()=>{ isAnimatingRef.current = false; processNext() })
+    })
+  }
+
+  const ingest = useCallback((fb:Feedback)=>{
+    queueRef.current.push(fb)
+    setPendingCount(queueRef.current.length)
+    processNext()
+  },[])
+
+  // Expose ingest via custom event (optional future use)
+  useEffect(()=>{
+    function handler(ev:CustomEvent<Feedback>){ ingest(ev.detail) }
+    window.addEventListener('feedback:new', handler as EventListener)
+    return ()=> window.removeEventListener('feedback:new', handler as EventListener)
+  },[ingest])
+
+  // Pill click to show pending
+  const showPending = () => {
+    const vp = viewportRef.current
+    if (vp) vp.scrollTo({ left:0, behavior:'smooth' })
+    // Poll until at left then process
+    const check = () => { if (atLeftEdge()) { processNext() } else requestAnimationFrame(check) }
+    check()
+  }
 
   // Card component
-  const card = (f:Feedback, idx:number) => {
+  const card = (f:Feedback) => {
     const sevBorder = f.severity==='critical' ? 'border-red-500/50' : f.severity==='warning' ? 'border-yellow-500/30' : 'border-neutral-800'
     return (
       <div key={f.id} className={`fb-card relative shrink-0 rounded-2xl bg-neutral-900/60 ${sevBorder} border p-5`} style={{ width:cardW, height:cardH, fontSize:12, lineHeight:'17px'}} aria-label={`feedback ${f.id}`}>        
@@ -149,9 +156,17 @@ export default function CommunityFeedbackRow({
         <div className="text-[11px] text-white/50">Realtime complaints (Thai)</div>
       </div>
       <div ref={viewportRef} className="fb-viewport relative" style={{ width:'100%', height, overflow:'hidden', position:'relative', WebkitMaskImage:'linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,1) 40px, rgba(0,0,0,1) calc(100% - 40px), rgba(0,0,0,0) 100%)', maskImage:'linear-gradient(90deg, rgba(0,0,0,0) 0, rgba(0,0,0,1) 40px, rgba(0,0,0,1) calc(100% - 40px), rgba(0,0,0,0) 100%)' }} aria-live="polite">
-        <div ref={trackRef} className="flex" style={{ gap, transform:`translateX(${shiftRef.current}px)` }}>
-          {items.map(card)}
+        <div className="absolute inset-0 overflow-x-auto overflow-y-hidden" style={{scrollbarWidth:'none'}} ref={el=>{ if (el) el.style.setProperty('scroll-behavior','smooth') }}>
+          <div ref={trackRef} className="flex" style={{ gap, paddingLeft:0, paddingRight:0 }}>
+            {items.map(card)}
+          </div>
         </div>
+        {/* Pending pill */}
+        {pendingCount>0 && userAwayRef.current && (
+          <button onClick={showPending} className="absolute top-2 left-3 z-10 text-[11px] bg-emerald-600/80 hover:bg-emerald-600 text-white px-3 py-1 rounded-md shadow focus:outline-none focus:ring-2 focus:ring-emerald-400/70">
+            +{pendingCount} new
+          </button>
+        )}
         {/* Fallback edge gradients for non-mask browsers */}
         <div className="pointer-events-none absolute inset-y-0 left-0 w-[70px]" style={{background:'linear-gradient(90deg, rgba(0,0,0,0.9), rgba(0,0,0,0))'}} />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-[70px]" style={{background:'linear-gradient(270deg, rgba(0,0,0,0.9), rgba(0,0,0,0))'}} />
