@@ -1,89 +1,126 @@
 import Layout from '../ui/Layout'
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import ProductTabs from '../components/nav/ProductTabs'
-import CitySim from '../monitoring/CitySim'
 import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
-import CommunityFeedbackRow, { Feedback } from '../components/CommunityFeedbackRow'
+import CommunityFeedbackRow from '../components/CommunityFeedbackRow'
 
-// Simple placeholder notifications data (could later be sourced dynamically)
-const seedNotifications: Array<Pick<UINote,'id'|'title'|'detail'|'time'>> = [
-  { id: 1, title: 'Signal Phase Shift Applied', detail: 'Adaptive cycle adjusted at 4 junctions', time: '2m ago' },
-]
-
-interface UINote {
-  id:number
-  title:string
-  detail:string
-  severity?: 'normal'|'warn'|'block'|'clear'
-  category: 'critical'|'major'|'routine'
-  time:string
-  count?:number
-  pinUntil?: number
+// relative time helper
+function timeAgo(ts:number){
+  const diff = Date.now()-ts; if (diff<60000) return 'now';
+  const m = Math.floor(diff/60000); if (m<60) return m+'m';
+  const h = Math.floor(m/60); return h+'h';
 }
 
-function NotificationsPanel({ pinnedCritical, regularFeed, onDismiss, tickerPaused, onMouseEnter, onMouseLeave }:{
-  pinnedCritical: UINote[];
-  regularFeed: UINote[];
-  onDismiss: (id:number)=>void;
-  tickerPaused: boolean;
-  onMouseEnter: ()=>void;
-  onMouseLeave: ()=>void;
-}){
-  const listRef = useRef<HTMLUListElement>(null)
-  const trackRef = useRef<HTMLDivElement>(null)
-  // Fade mask CSS is always present
+// New grouped alert model
+type Alert = {
+  id: string;
+  ts: number; // epoch ms
+  title: string; // card text
+  severity: 'critical'|'warning'|'info';
+  category: string; // grouping key
+}
+
+type Group = {
+  key: string;
+  items: Alert[]; // newest first
+  lastTs: number;
+  highest: Alert['severity'];
+  expanded: boolean;
+  pinUntil?: number;
+  ephemeral?: Alert | null; // currently showing as a single card (pre-stack)
+  ephemeralUntil?: number;
+  showJustNowBadgeUntil?: number;
+  originalIndex?: number; // preserves slot during ephemeral
+}
+
+interface NotificationsPanelProps {
+  groups: Group[]; // already ordered
+  onToggle: (key:string)=>void;
+  onDismissPin: (key:string)=>void;
+  scrolling: boolean;
+  viewportRef: React.RefObject<HTMLDivElement>;
+  virtualization?: { start:number; end:number } | null;
+}
+
+const DISPLAY_MS = 1200;
+const JUST_NOW_MS = 3000;
+
+function severityBorder(g:Group){
+  if (g.highest==='critical') return 'border-red-500/70 shadow-[0_0_6px_1px_rgba(239,68,68,0.45)] border-2';
+  if (g.highest==='warning') return 'border-yellow-400/40 border';
+  return 'border-white/10 border';
+}
+
+const cardAnimClass = 'transition-[opacity,transform] duration-200 ease-out';
+
+function NotificationsPanel({ groups, onToggle, onDismissPin, scrolling, viewportRef, virtualization }:NotificationsPanelProps){
+  // Render groups (apply virtualization window if present)
+  const slice = virtualization ? groups.slice(virtualization.start, virtualization.end) : groups;
   return (
-    <div className="w-full flex flex-col h-full overflow-hidden notifications-viewport" style={{ paddingTop:12, paddingBottom:12, position:'relative', maskImage:'linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)', WebkitMaskImage:'linear-gradient(to bottom, rgba(0,0,0,1) 80%, rgba(0,0,0,0) 100%)' }}
-      onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}
-    >
+    <div className="w-full flex flex-col h-full" style={{paddingTop:12,paddingBottom:12}}>
       <div className="mb-3 px-1 shrink-0">
         <h2 className="text-[15px] font-semibold tracking-tight mb-1">Recent Notifications</h2>
-        <p className="text-[11px] text-white/60 leading-snug">Critical events pinned • ticker below.</p>
+        <p className="text-[12px] text-white/55 leading-snug">Critical events are pinned. Related alerts auto-stack. Scroll to see history.</p>
       </div>
-      {/* Pinned critical block */}
-      {pinnedCritical.length > 0 && (
-        <ul className="space-y-2 px-1 mb-2">
-          {pinnedCritical.slice(0,3).map((n,i) => {
-            const border = 'border-red-500/70 shadow-[0_0_6px_1px_rgba(239,68,68,0.45)] border-2'
-            const full = n.detail ? `${n.title}: ${n.detail}` : n.title
+      <div ref={viewportRef} className="flex-1 min-h-0 notifications-viewport relative" aria-live="polite" style={{scrollbarWidth:'thin'}}>
+        <ul className="space-y-2 px-1 pb-2">
+          {slice.map(g => {
+            const border = severityBorder(g)
+            const isPinned = g.highest==='critical' && g.pinUntil && Date.now() <= g.pinUntil
+            const showEphemeral = !!g.ephemeral && Date.now() <= (g.ephemeralUntil||0)
+            // Collapsed row (stack)
+            if (!g.expanded && !showEphemeral) {
+              const count = g.items.length>9 ? '9+' : g.items.length
+              const latest = g.items[0]
+              const showJustNow = g.showJustNowBadgeUntil && Date.now() <= g.showJustNowBadgeUntil
+              return (
+                <li key={g.key} className={`group rounded-md bg-black/30 px-3 py-[10px] flex items-center gap-3 ${border} ${cardAnimClass}`}>
+                  <button onClick={()=>onToggle(g.key)} className="text-left flex-1 min-w-0 focus:outline-none">
+                    <p className="text-[11px] text-white/60 font-medium truncate mb-[2px]">{g.key}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[12px] font-medium text-white/85 truncate" title={latest.title}>{latest.title}</span>
+                      <span className="text-[10px] text-white/40 whitespace-nowrap">{count}</span>
+                      {showJustNow && <span className="text-[10px] text-emerald-300/80">+1 just now</span>}
+                    </div>
+                  </button>
+                  {isPinned && <button onClick={()=>onDismissPin(g.key)} title="Unpin" className="text-[11px] text-white/50 hover:text-white/80 px-1">×</button>}
+                </li>
+              )
+            }
+            // Ephemeral single-card
+            if (showEphemeral && g.ephemeral) {
+              return (
+                <li key={g.key+':ephemeral'} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} ${cardAnimClass}`} style={{opacity:0, transform:'translateY(8px)'}} data-animate>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={g.ephemeral.title}>{g.ephemeral.title}</p>
+                  </div>
+                  <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">now</span>
+                </li>
+              )
+            }
+            // Expanded view
             return (
-              <li key={n.id} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease] relative`}>
-                <div className="flex-1 min-w-0 pr-2">
-                  <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{full}</p>
+              <li key={g.key} className={`rounded-md bg-black/20 ${cardAnimClass} overflow-hidden`}>
+                <div className={`flex items-center px-3 py-[8px] cursor-pointer ${severityBorder(g)} bg-black/30`} onClick={()=>onToggle(g.key)}>
+                  <p className="text-[12px] font-semibold text-white/85 flex-1 truncate" title={g.key}>{g.key}</p>
+                  <span className="text-[10px] text-white/40 mr-2">{g.items.length}</span>
+                  {g.highest==='critical' && g.pinUntil && Date.now()<=g.pinUntil && <span className="text-[10px] text-red-300/80 mr-2">PIN</span>}
+                  <span className="text-[11px] text-white/50">{g.expanded? '−':'+'}</span>
                 </div>
-                <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
-                <button className="absolute top-1 right-1 text-[13px] text-white/60 hover:text-white/90 px-1 py-0.5 rounded focus:outline-none" title="Dismiss" onClick={()=>onDismiss(n.id)}>&times;</button>
+                <ul className="divide-y divide-white/5">
+                  {g.items.map(a => (
+                    <li key={a.id} className="px-3 py-2 bg-black/20">
+                      <p className="text-[12px] text-white/85 leading-snug" title={a.title}>{a.title}</p>
+                      <span className="text-[10px] text-white/30">{timeAgo(a.ts)}</span>
+                    </li>
+                  ))}
+                </ul>
               </li>
             )
           })}
-          {pinnedCritical.length > 3 && (
-            <li className="flex items-center justify-center text-[11px] text-red-300/80 mt-1">+{pinnedCritical.length-3} more critical</li>
-          )}
         </ul>
-      )}
-      {/* Ticker for regular feed */}
-      <div className="relative flex-1 min-h-0" style={{overflow:'hidden'}}>
-        <div ref={trackRef} style={{transition:'none'}}>
-          <ul ref={listRef} className="space-y-2 px-1 select-none">
-            {regularFeed.map((n,i) => {
-              const border = n.category==='major'
-                ? 'border-yellow-400/40 border'
-                : 'border-white/10 border'
-              const full = n.detail ? `${n.title}: ${n.detail}` : n.title
-              const line = (n.count && n.count>1) ? `${full} (x${n.count})` : full
-              return (
-                <li key={n.id+':'+(n.time||i)} className={`group flex items-start gap-3 rounded-md bg-black/30 px-3 py-[9px] ${border} transition-colors animate-[fadeIn_0.35s_ease]`}>
-                  <div className="flex-1 min-w-0 pr-2">
-                    <p className="text-[12px] font-medium text-white/85 leading-snug truncate" title={full}>{line}</p>
-                  </div>
-                  <span className="text-[10px] text-white/35 ml-2 whitespace-nowrap mt-0.5">{n.time}</span>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-        {/* Fallback fade overlay for browsers without mask support */}
-        <div style={{position:'absolute',left:0,right:0,bottom:0,height:36,pointerEvents:'none',background:'linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,0.85) 90%)'}} />
+        {/* gradient mask via CSS class; extra overlay for safety */}
+        <div className="pointer-events-none absolute inset-0" style={{WebkitMaskImage:'linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%)',maskImage:'linear-gradient(#0000 0,#000 20px,#000 calc(100% - 20px),#0000 100%)'}} />
       </div>
     </div>
   )
@@ -99,114 +136,161 @@ function DashboardShell({ children }: { children: React.ReactNode }){
 }
 
 export default function MonitoringPage() {
-  // --- Notification state ---
-  const PIN_SECONDS = 10
-  const [pinnedCritical, setPinnedCritical] = useState<UINote[]>([])
-  const [regularFeed, setRegularFeed] = useState<UINote[]>([])
-  const seen = useRef<Set<number>>(new Set())
-  // Ticker state
-  const [tickerPaused, setTickerPaused] = useState(false)
-  const tickerOffset = useRef(0)
-  const tickerRaf = useRef<number>()
-  const tickerListRef = useRef<HTMLUListElement>(null)
-  const tickerTrackRef = useRef<HTMLDivElement>(null)
-  // Ingest logic
-  const pushNotification = React.useCallback((e:NotificationEvent)=>{
-    const raw = e.message.replace(/^([\u{1F534}🔴⚠️🟢])\s*/u,'').trim()
-    const lower = raw.toLowerCase()
-    const title = raw.split(':')[0]?.trim() || 'Update'
-    const detail = raw.split(':').slice(1).join(':').trim()
-    // Classification rules
-    let category: UINote['category'] = 'routine'
-    if (/(gridlock|emission spike|node failure|critical delay|blockage|critical congestion|link closed)/i.test(raw)) category='critical'
-    else if (/(heavy congestion|peak-hour surge|congestion rising)/i.test(raw)) category='major'
-    else category='routine'
-    // Map to severity for legacy styling (critical/block, major/warn)
-    let severity: UINote['severity'] = category==='critical' ? 'block' : category==='major' ? 'warn' : 'normal'
-    // Filtering: optionally ignore low-value clears/green adoption unless critical
-    if (/high ev adoption|traffic cleared|temporary relief/i.test(lower)) return
-    if (e.type==='clear' && category!=='critical') return
-    if (seen.current.has(e.id)) return
-    seen.current.add(e.id)
-    if (category==='critical') {
-      setPinnedCritical(prev => [
-        { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1, pinUntil: Date.now() + PIN_SECONDS*1000 },
-        ...prev.filter(n=>n.id!==e.id)
-      ])
-    } else {
-      setRegularFeed(prev => {
-        // Group by title+detail+category signature
-        const keyIdx = prev.findIndex(n => n.category===category && n.title===title && n.detail===detail)
-        if (keyIdx !== -1) {
-          const copy=[...prev]
-          const ex=copy[keyIdx]
-          copy[keyIdx] = { ...ex, time:'now', count:(ex.count||1)+1 }
-          return copy
-        }
-        return [ { id:e.id, title: title.slice(0,90), detail: detail.slice(0,140), severity, category, time:'now', count:1 }, ...prev.slice(0,99) ]
-      })
-    }
-  },[])
-  // Pin expiry GC
-  useEffect(()=>{
-    const interval = setInterval(()=>{
-      setPinnedCritical(prev => {
-        const now = Date.now()
-        const keep:UINote[] = []
-        const expired:UINote[] = []
-        for (const ev of prev) {
-          if (ev.pinUntil && now <= ev.pinUntil) keep.push(ev)
-          else expired.push({...ev, pinUntil: undefined})
-        }
-        if (expired.length) setRegularFeed(rf => [...expired, ...rf])
-        return keep
-      })
-    }, 1000)
-    return ()=>clearInterval(interval)
-  },[])
-  // Manual dismiss
-  const handleDismiss = (id:number) => {
-    setPinnedCritical(prev => {
-      const idx = prev.findIndex(n=>n.id===id)
-      if (idx===-1) return prev
-      const [removed] = prev.splice(idx,1)
-      setRegularFeed(rf => [{...removed, pinUntil:undefined}, ...rf])
-      return [...prev]
-    })
+  // --- Grouped notifications state ---
+  const PIN_SECONDS = 10;
+  const groupsRef = useRef<Map<string,Group>>(new Map());
+  const [ordered, setOrdered] = useState<Group[]>([]); // render order
+  const [version, setVersion] = useState(0); // trigger renders when map mutates
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [scrolling, setScrolling] = useState(false);
+  const scrollIdleTimer = useRef<number>();
+  const pendingReorder = useRef(false);
+
+  const recomputeOrder = useCallback(()=>{
+    const list:Group[] = Array.from(groupsRef.current.values());
+    const now = Date.now();
+    const pinned = list.filter(g => g.highest==='critical' && g.pinUntil && now <= g.pinUntil);
+    const others = list.filter(g => !(g.highest==='critical' && g.pinUntil && now <= g.pinUntil));
+    pinned.sort((a,b)=> b.lastTs - a.lastTs);
+    others.sort((a,b)=> b.lastTs - a.lastTs);
+    setOrdered([...pinned, ...others]);
+  },[]);
+
+  const scheduleReorder = useCallback(()=>{
+    if (scrolling) { pendingReorder.current = true; return }
+    recomputeOrder();
+  },[recomputeOrder, scrolling]);
+
+  const markDirty = () => setVersion(v=>v+1);
+
+  const toggleGroup = (key:string) => {
+    const g = groupsRef.current.get(key); if (!g) return;
+    g.expanded = !g.expanded;
+    // cancel ephemeral if expanding
+    if (g.expanded && g.ephemeral) { g.items.unshift(g.ephemeral); g.ephemeral = null; g.ephemeralUntil=undefined; }
+    markDirty();
+    scheduleReorder();
+  };
+
+  const dismissPin = (key:string) => {
+    const g = groupsRef.current.get(key); if (!g) return;
+    g.pinUntil = Date.now()-1;
+    markDirty();
+    scheduleReorder();
+  };
+
+  function classify(raw:string): { severity:Alert['severity']; category:string; title:string } {
+    const title = raw.trim();
+    let severity:Alert['severity'] = /critical|failure|gridlock|spike|blockage/i.test(raw)? 'critical' : /heavy|congestion|warning|delay/i.test(raw)? 'warning':'info';
+    // naive category extraction
+    const departments = ['Compliance','Logistics','Operations','Supply Chain','Customer Service','Finance','IT','Procurement','Legal','Security','Training','R&D','Analytics'];
+    let category = departments.find(d => new RegExp(d,'i').test(raw)) || (severity==='critical' ? 'Critical' : 'General');
+    return { severity, category, title };
   }
-  // --- Ticker logic ---
-  useEffect(()=>{
-    let raf:number; let last=performance.now()
-    function step(now:number){
-      if (tickerPaused) { raf=requestAnimationFrame(step); return }
-      const dt = (now-last)/1000; last=now
-      const SPEED = 28 // px/sec
-      tickerOffset.current += SPEED*dt
-      const list = tickerListRef.current
-      const track = tickerTrackRef.current
-      if (list && track) {
-        const rowH = list.firstElementChild?.clientHeight||0
-        if (rowH && tickerOffset.current >= rowH) {
-          tickerOffset.current -= rowH
-          setRegularFeed(prev => {
-            if (prev.length<2) return prev
-            const first = prev[0];
-            return [...prev.slice(1), first]
-          })
-        }
-        track.style.transform = `translateY(${-tickerOffset.current}px)`
-      }
-      raf=requestAnimationFrame(step)
+
+  const addAlert = useCallback((alert:Alert)=>{
+    const map = groupsRef.current;
+    let g = map.get(alert.category);
+    const now = Date.now();
+    if (!g) {
+      g = { key: alert.category, items:[alert], lastTs: alert.ts, highest: alert.severity, expanded:false, pinUntil: alert.severity==='critical'? now + PIN_SECONDS*1000 : undefined, ephemeral:null };
+      map.set(alert.category, g);
+      markDirty();
+      scheduleReorder();
+      return;
     }
-    raf=requestAnimationFrame(step)
-    return ()=>cancelAnimationFrame(raf)
-  },[tickerPaused])
-  // Pause on hover or tab hidden
+    // update highest severity
+    if (alert.severity==='critical') {
+      g.highest='critical'; g.pinUntil = now + PIN_SECONDS*1000;
+    } else if (alert.severity==='warning' && g.highest==='info') g.highest='warning';
+    g.lastTs = alert.ts;
+    if (g.expanded) {
+      g.items.unshift(alert);
+      g.showJustNowBadgeUntil = now + JUST_NOW_MS; // show badge on header when expanded collapses? kept simple
+    } else {
+      // start ephemeral display
+      g.ephemeral = alert;
+      g.ephemeralUntil = now + DISPLAY_MS;
+      g.showJustNowBadgeUntil = now + JUST_NOW_MS; // will show after collapse
+      // don't push into items until collapse
+    }
+    markDirty();
+    scheduleReorder();
+  },[scheduleReorder]);
+
+  // Simulation ingest -> convert NotificationEvent
+  const pushNotification = useCallback((e:NotificationEvent)=>{
+    const raw = e.message.replace(/^([\u{1F534}🔴⚠️🟢])\s*/u,'').trim();
+    const { severity, category, title } = classify(raw);
+    addAlert({ id: String(e.id), ts: Date.now(), title, severity, category });
+  },[addAlert]);
+
+  // Ephemeral collapse + badge expiry loop
   useEffect(()=>{
-    function onVis(){ setTickerPaused(document.hidden) }
-    document.addEventListener('visibilitychange', onVis)
-    return ()=>document.removeEventListener('visibilitychange', onVis)
-  },[])
+    const t = setInterval(()=>{
+      let changed = false; const now=Date.now();
+      groupsRef.current.forEach(g => {
+        if (g.ephemeral && g.ephemeralUntil && now > g.ephemeralUntil) {
+          // collapse
+          g.items.unshift(g.ephemeral); g.ephemeral=null; g.ephemeralUntil=undefined; changed=true; scheduleReorder();
+        }
+        if (g.showJustNowBadgeUntil && now > g.showJustNowBadgeUntil) { g.showJustNowBadgeUntil=undefined; changed=true; }
+      });
+      if (changed) markDirty();
+    }, 200);
+    return ()=>clearInterval(t);
+  },[scheduleReorder]);
+
+  // Scroll handling (pause reorder while user scrolls)
+  useEffect(()=>{
+    const el = scrollContainerRef.current; if (!el) return;
+    function onScroll(){
+      setScrolling(true);
+      if (scrollIdleTimer.current) window.clearTimeout(scrollIdleTimer.current);
+      scrollIdleTimer.current = window.setTimeout(()=>{
+        setScrolling(false);
+        if (pendingReorder.current) { pendingReorder.current=false; recomputeOrder(); }
+      }, 1000);
+    }
+    el.addEventListener('scroll', onScroll, { passive:true });
+    return ()=> el.removeEventListener('scroll', onScroll);
+  },[recomputeOrder]);
+
+  // Initial order compute effect (in case of seeds later)
+  useEffect(()=>{ recomputeOrder(); },[version, recomputeOrder]);
+
+  // Simple mount animation for ephemeral cards
+  useEffect(()=>{
+    const el = scrollContainerRef.current; if (!el) return;
+    const nodes = el.querySelectorAll('li[data-animate]');
+    nodes.forEach(n => {
+      requestAnimationFrame(()=>{
+        (n as HTMLElement).style.opacity='1';
+        (n as HTMLElement).style.transform='translateY(0)';
+      });
+    });
+  });
+
+  // Virtualization (basic) if more than 50 groups
+  const virtualization = (()=>{
+    const total = ordered.length; if (total <= 50) return null;
+    const estRow = 56; // approx collapsed height
+    const el = scrollContainerRef.current; if (!el) return null;
+    const scrollTop = el.scrollTop; const h = el.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop/estRow)-5);
+    const end = Math.min(total, Math.ceil((scrollTop+h)/estRow)+5);
+    return { start, end };
+  })();
+
+  // Provide some seed alerts for initial visual (optional) - we keep prior seed minimal
+  useEffect(()=>{
+    if (ordered.length===0) {
+      addAlert({ id:'seed-1', ts:Date.now(), title:'Signal Phase Shift Applied', severity:'info', category:'Operations' });
+    }
+  },[ordered.length, addAlert]);
+
+  // No external dismiss of individual alerts now; pin dismissal handled on group
+  const handleDismiss = (id:number)=>{} // placeholder to satisfy legacy references removed
   return (
     <Layout>
       {/* Secondary product navigation */}
@@ -220,12 +304,12 @@ export default function MonitoringPage() {
           <div className="cm-grid-stack grid gap-[60px]" style={{ gridTemplateColumns: '360px 1fr' }}>
             <div className="rounded-xl border border-white/10 bg-black/40 px-5 py-3 self-start" style={{ width: 360, height:650 }}>
               <NotificationsPanel
-                pinnedCritical={pinnedCritical}
-                regularFeed={regularFeed}
-                onDismiss={handleDismiss}
-                tickerPaused={tickerPaused}
-                onMouseEnter={()=>setTickerPaused(true)}
-                onMouseLeave={()=>setTickerPaused(false)}
+                groups={ordered}
+                onToggle={toggleGroup}
+                onDismissPin={dismissPin}
+                scrolling={scrolling}
+                viewportRef={scrollContainerRef}
+                virtualization={virtualization}
               />
             </div>
             <div className="p-0 flex flex-col" style={{ width:1000, height:600 }}>
