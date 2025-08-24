@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import ProductTabs from '../components/nav/ProductTabs'
 import CitySim from '../monitoring/CitySim'
 import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
+import CommunityFeedbackRow, { Feedback } from '../components/CommunityFeedbackRow'
 
 // Simple placeholder notifications data (could later be sourced dynamically)
 const seedNotifications: Array<Pick<UINote,'id'|'title'|'detail'|'time'>> = [
@@ -237,6 +238,23 @@ export default function MonitoringPage() {
               </div>
             </div>
           </div>
+          {/* Community Feedback Row */}
+          <CommunityFeedbackRow
+            initial={[
+              {"id":"fb-001","bold":"รถบรรทุกจอดคาปากแยก","text":" นานเกินไป ทำให้ช่องทาง Analytics ติดขัดหนัก ช่วยจัดการที","user":"anonymous-user1","dept":"Analytics","ts":1735039200000,"severity":"critical"},
+              {"id":"fb-002","bold":"คาร์บอนของฝ่าย Compliance พุ่งขึ้นอย่างผิดปกติ","text":" เมื่อเทียบกับเมื่อวาน เกิดอะไรขึ้นครับ","user":"anonymous-user2","dept":"Compliance","ts":1735039260000},
+              {"id":"fb-003","bold":"มีรถบรรทุกจอดซ้อนเลน","text":" หน้าฝ่าย Operations ทำให้รถสวนกันไม่ได้","user":"anonymous-user3","dept":"Operations","ts":1735039320000},
+              {"id":"fb-004","bold":"การปล่อย CO₂ ฝ่าย Supply Chain เพิ่มขึ้น 35%","text":" ภายใน 1 ชั่วโมงที่ผ่านมา ตรวจสอบด่วน","user":"anonymous-user4","dept":"Supply Chain","ts":1735039380000,"severity":"warning"},
+              {"id":"fb-005","bold":"รถส่งของขวางช่องทาง Customer Service","text":" ติดยาวหลายบล็อกแล้ว","user":"anonymous-user5","dept":"Customer Service","ts":1735039440000},
+              {"id":"fb-006","bold":"ค่าคาร์บอนของ R&D กระโดดขึ้นทันที","text":" หลังรอบเปลี่ยนกะ มีการทดสอบเครื่องจักรหรือไม่","user":"anonymous-user6","dept":"R&D","ts":1735039500000},
+              {"id":"fb-007","bold":"รถบรรทุกจอดกินเลน","text":" แถว Finance ทำให้รถเลี้ยวไม่ได้","user":"anonymous-user7","dept":"Finance","ts":1735039560000},
+              {"id":"fb-008","bold":"ค่าการปล่อยของฝ่าย IT สูงผิดปกติ","text":" ตั้งแต่ช่วงเช้า ใครเปิดเครื่องเยอะไปหรือเปล่า","user":"anonymous-user8","dept":"IT","ts":1735039620000},
+              {"id":"fb-009","bold":"รถยกขึ้นของหลุด","text":" ทำให้ทางเข้า Procurement ตัน ช่วยเคลียร์ด่วน","user":"anonymous-user9","dept":"Procurement","ts":1735039680000,"severity":"critical"},
+              {"id":"fb-010","bold":"การปล่อย CO₂ ฝ่าย Legal เพิ่มแบบพรวดพราด","text":" เกิดจากระบบระบายอากาศเสียหรือไม่","user":"anonymous-user10","dept":"Legal","ts":1735039740000},
+              {"id":"fb-011","bold":"รถบรรทุกจอดรอเอกสาร","text":" ขวางหน้าฝ่าย Security เป็นชั่วโมงแล้ว","user":"anonymous-user11","dept":"Security","ts":1735039800000},
+              {"id":"fb-012","bold":"ฝั่ง Training ควันดำขึ้นชัดเจน","text":" ควรตรวจเครื่องปั่นไฟด่วน","user":"anonymous-user12","dept":"Training","ts":1735039860000,"severity":"warning"}
+            ]}
+          />
         </DashboardShell>
       </section>
     </Layout>
