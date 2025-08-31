@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import Layout from '../ui/Layout'
-import ProductTabs from '../components/nav/ProductTabs'
+import TabsWithDropdown from '@/components/TabsWithDropdown'
 import AdaptiveNetworkSim, { NotificationEvent } from '../monitoring/AdaptiveNetworkSim'
 import CommunityFeedbackRow from '../components/CommunityFeedbackRow'
 import { startFeedbackMock } from '../mock/feedbackMock'
@@ -190,7 +190,15 @@ export default function MonitoringPage() {
 
   return (
     <Layout>
-      <ProductTabs />
+      <TabsWithDropdown
+        tabs={[
+          { id: 'monitoring', label: 'Monitoring' },
+          { id: 'optimization', label: 'Optimization' },
+          { id: 'reporting', label: 'Reporting' },
+        ]}
+        initial="monitoring"
+        onChange={(id) => { /* TODO: hook into routing or state */ }}
+      />
       <section
         className="relative min-h-[70vh] bg-transparent px-6 pt-8"
         aria-labelledby="monitoring-heading"
