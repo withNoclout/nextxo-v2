@@ -119,6 +119,18 @@ export default function MonitoringPage() {
             <div className="text-[12px] text-white/50 leading-tight">Project environment overview</div>
           </div>
         </div>
+
+        {/* Two-line quote 40px below (mt-10 ~ 40px) */}
+        <div className="mt-10 leading-[1.07] select-none">
+          <div className="text-[27px] font-semibold tracking-tight text-white">REALTIME VISIBILITY</div>
+          <div className="text-[23px] font-medium tracking-tight text-white/90">for emissions & node health</div>
+        </div>
+
+        {/* Explanation 50px below */}
+  <p className="max-w-[520px] text-[15px] text-white/60 leading-relaxed" style={{ marginTop: '50px' }}>
+          Live streaming metrics capture carbon deltas, performance anomalies, and node uptime in one unified view.
+          Use this page to spot drift early, validate optimizations, and keep infrastructure efficient.
+        </p>
       </div>
       {/* Right side placeholder */}
   <div className="col-span-12 lg:col-span-5" style={{ marginTop: '65px' }}>
