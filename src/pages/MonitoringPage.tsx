@@ -1,8 +1,33 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Layout from '../ui/Layout'
 import ProductSubNav from '../components/ProductSubNav'
 
 export default function MonitoringPage() {
+  // Animated date component (reveals the date like it's being freshly generated each visit)
+  const AnimatedDate: React.FC = () => {
+    const finalText = new Date().toLocaleDateString()
+    const [shown, setShown] = useState('')
+
+    useEffect(() => {
+      let i = 0
+      const step = () => {
+        i++
+        setShown(finalText.slice(0, i))
+        if (i < finalText.length) {
+          timeout = window.setTimeout(step, 55)
+        }
+      }
+      let timeout = window.setTimeout(step, 180) // slight delay before starting
+      return () => window.clearTimeout(timeout)
+    }, [finalText])
+
+    return (
+      <span className="tabular-nums tracking-tight relative">
+        <span className="opacity-90">{shown}</span>
+        <span className="inline-block w-px -ml-px align-middle h-[1em] animate-pulse bg-white/40" style={{ visibility: shown === finalText ? 'hidden' : 'visible' }} />
+      </span>
+    )
+  }
   // Product dropdown list representation (add / adjust icons as needed)
   const productItems = [
     {
@@ -107,7 +132,7 @@ export default function MonitoringPage() {
             </span>
           </span>
           <span className="text-white/25">|</span>
-          <span className="text-white/70">{new Date().toLocaleDateString()}</span>
+          <span className="text-white/70"><AnimatedDate /></span>
           <span className="text-white/25">|</span>
           <span className="text-white/50">Active Server:</span>
           <span className="text-white/90 font-semibold">us-east-1</span>
@@ -131,6 +156,36 @@ export default function MonitoringPage() {
           Live streaming metrics capture carbon deltas, performance anomalies, and node uptime in one unified view.
           Use this page to spot drift early, validate optimizations, and keep infrastructure efficient.
         </p>
+        {/* Action buttons 40px below explanation */}
+        <div className="mt-10 flex items-center gap-4">
+          <button
+            className="h-10 px-5 rounded-md bg-emerald-500 text-white text-[13px] font-medium tracking-tight border border-emerald-400/40 shadow-sm hover:bg-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400/60 active:scale-[0.985] transition"
+            type="button"
+          >
+            Start Monitoring
+          </button>
+          <a
+            href="https://supabase.com/docs/guides/auth"
+            target="_blank"
+            rel="noreferrer"
+            className="h-10 px-5 rounded-md border border-white/15 bg-white/[0.03] text-white/85 text-[13px] font-medium tracking-tight hover:text-white hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-white/25 active:scale-[0.985] transition inline-flex items-center justify-center gap-2"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-[18px] h-[18px] text-white/60"
+              aria-hidden="true"
+            >
+              <path d="M4.5 5.5A2.5 2.5 0 0 1 7 3h11.5v15.5A2.5 2.5 0 0 0 16 16H7a2.5 2.5 0 0 0-2.5 2.5V5.5Z" />
+              <path d="M16 3v13c-.5-.3-1.1-.5-2-.5H7c-.9 0-1.5.2-2 .5" />
+            </svg>
+            <span>See documentation</span>
+          </a>
+        </div>
       </div>
       {/* Right side placeholder */}
   <div className="col-span-12 lg:col-span-5" style={{ marginTop: '65px' }}>
@@ -138,6 +193,51 @@ export default function MonitoringPage() {
           (Right side placeholder)
         </div>
       </div>
+    </div>
+  </div>
+  {/* Second session: three equal panels 60px below previous section */}
+  <div className="mt-[60px] max-w-[1350px] mx-auto px-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {[
+        {
+          title: 'Log Stream',
+          desc: 'Aggregated real‑time application logs with query filters for latency spikes, error bursts, and user impact tracing.',
+          icon: (
+            <svg viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" className="w-[30px] h-[30px] text-white/60">
+              <rect x="4" y="4" width="16" height="16" rx="2" />
+              <path d="M8 9h8M8 13h5M8 17h3" />
+            </svg>
+          )
+        },
+        {
+          title: 'Anomaly Scanner',
+          desc: 'Streaming detection surfaces carbon or performance outliers early so you can remediate before users notice.',
+          icon: (
+            <svg viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" className="w-[30px] h-[30px] text-white/60">
+              <path d="M12 3l9 6-9 6-9-6 9-6z" />
+              <path d="M5 15l7 6 7-6" />
+            </svg>
+          )
+        },
+        {
+          title: 'Carbon Profiler',
+          desc: 'Breaks down emission contribution per region & function, guiding optimization and greener scaling decisions.',
+          icon: (
+            <svg viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" className="w-[30px] h-[30px] text-white/60">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M12 7v5l3 3" />
+            </svg>
+          )
+        }
+      ].map((p, i) => (
+  <div key={i} className="h-[250px] p-5 flex flex-col">
+          <div className="flex items-start">{p.icon}</div>
+          <h3 className="mt-[25px] text-[17px] font-semibold tracking-tight text-white">{p.title}</h3>
+          <p className="mt-[35px] text-[14px] leading-relaxed text-white/55 max-w-[300px]">
+            {p.desc}
+          </p>
+        </div>
+      ))}
     </div>
   </div>
   <section
